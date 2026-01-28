@@ -1,7 +1,7 @@
-# Zotero Plugin Template
+# Zotero Var Highlighter
 
 [![zotero target version](https://img.shields.io/badge/Zotero-7-green?style=flat-square&logo=zotero&logoColor=CC2936)](https://www.zotero.org)
-[![Using Zotero Plugin Template](https://img.shields.io/badge/Using-Zotero%20Plugin%20Template-blue?style=flat-square&logo=github)](https://github.com/windingwind/zotero-plugin-template)
+[![Using Zotero Var Highlighter](https://img.shields.io/badge/Using-Zotero%20Plugin%20Template-blue?style=flat-square&logo=github)](https://github.com/windingwind/zotero-plugin-template)
 
 This is a plugin template for [Zotero](https://www.zotero.org/).
 
@@ -15,7 +15,7 @@ This is a plugin template for [Zotero](https://www.zotero.org/).
   - [🛠️ Zotero Plugin Scaffold](https://github.com/northword/zotero-plugin-scaffold)
   - [ℹ️ Zotero Type Definitions](https://github.com/windingwind/zotero-types)
   - [📜 Zotero Source Code](https://github.com/zotero/zotero)
-  - [📌 Zotero Plugin Template](https://github.com/windingwind/zotero-plugin-template) (This repo)
+  - [📌 Zotero Var Highlighter](https://github.com/windingwind/zotero-plugin-template) (This repo)
 
 > [!tip]
 > 👁 Watch this repo so that you can be notified whenever there are fixes & updates.
@@ -46,10 +46,10 @@ This is a plugin template for [Zotero](https://www.zotero.org/).
 
 If you are using this repo, I recommended that you put the following badge on your README:
 
-[![Using Zotero Plugin Template](https://img.shields.io/badge/Using-Zotero%20Plugin%20Template-blue?style=flat-square&logo=github)](https://github.com/windingwind/zotero-plugin-template)
+[![Using Zotero Var Highlighter](https://img.shields.io/badge/Using-Zotero%20Plugin%20Template-blue?style=flat-square&logo=github)](https://github.com/windingwind/zotero-plugin-template)
 
 ```md
-[![Using Zotero Plugin Template](https://img.shields.io/badge/Using-Zotero%20Plugin%20Template-blue?style=flat-square&logo=github)](https://github.com/windingwind/zotero-plugin-template)
+[![Using Zotero Var Highlighter](https://img.shields.io/badge/Using-Zotero%20Plugin%20Template-blue?style=flat-square&logo=github)](https://github.com/windingwind/zotero-plugin-template)
 ```
 
 ## Features

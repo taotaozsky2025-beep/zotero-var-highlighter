@@ -62,18 +62,18 @@ async function updatePrefsUI() {
     .setProp("getRowCount", () => addon.data.prefs?.rows.length || 0)
     .setProp(
       "getRowData",
-      (index) =>
+      (index: number) =>
         addon.data.prefs?.rows[index] || {
           title: "no data",
           detail: "no data",
-        },
+        }
     )
     // Show a progress window when selection changes
-    .setProp("onSelectionChange", (selection) => {
+    .setProp("onSelectionChange", (selection: any) => {
       new ztoolkit.ProgressWindow(config.addonName)
         .createLine({
           text: `Selected line: ${addon.data.prefs?.rows
-            .filter((v, i) => selection.isSelected(i))
+            .filter((v: any, i: number) => selection.isSelected(i))
             .map((row) => row.title)
             .join(",")}`,
           progress: 100,
@@ -86,7 +86,7 @@ async function updatePrefsUI() {
       if (event.key == "Delete" || (Zotero.isMac && event.key == "Backspace")) {
         addon.data.prefs!.rows =
           addon.data.prefs?.rows.filter(
-            (v, i) => !tableHelper.treeInstance.selection.isSelected(i),
+            (v: any, i: number) => !tableHelper.treeInstance.selection.isSelected(i)
           ) || [];
         tableHelper.render();
         return false;
@@ -96,7 +96,7 @@ async function updatePrefsUI() {
     // For find-as-you-type
     .setProp(
       "getRowString",
-      (index) => addon.data.prefs?.rows[index].title || "",
+      (index: number) => addon.data.prefs?.rows[index].title || ""
     )
     // Render the table.
     .render(-1, () => {

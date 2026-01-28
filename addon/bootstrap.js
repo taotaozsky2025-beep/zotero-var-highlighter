@@ -10,6 +10,7 @@ var chromeHandle;
 function install(data, reason) {}
 
 async function startup({ id, version, resourceURI, rootURI }, reason) {
+  Zotero.debug("[ZVH] startup begin");
   var aomStartup = Components.classes[
     "@mozilla.org/addons/addon-manager-startup;1"
   ].getService(Components.interfaces.amIAddonManagerStartup);
@@ -18,23 +19,62 @@ async function startup({ id, version, resourceURI, rootURI }, reason) {
     ["content", "__addonRef__", rootURI + "content/"],
   ]);
 
+  const safeConsole = (typeof console !== "undefined" && console) || {
+    log: (...args) => Zotero.debug(args.map(String).join(" ")),
+    info: (...args) => Zotero.debug(args.map(String).join(" ")),
+    warn: (...args) => Zotero.debug(args.map(String).join(" ")),
+    error: (...args) => {
+      try {
+        Zotero.logError(
+          args[0] instanceof Error
+            ? args[0]
+            : new Error(args.map(String).join(" ")),
+        );
+      } catch (e) {
+        Zotero.debug("console.error fallback: " + String(e));
+      }
+    },
+  };
+
   /**
    * Global variables for plugin code.
    * The `_globalThis` is the global root variable of the plugin sandbox environment
    * and all child variables assigned to it is globally accessible.
    * See `src/index.ts` for details.
    */
-  const ctx = { rootURI };
+  const ctx = {
+    rootURI,
+    Zotero,
+    Services,
+    Components,
+    console: safeConsole,
+    setTimeout,
+    clearTimeout,
+    setInterval,
+    clearInterval,
+  };
   ctx._globalThis = ctx;
 
-  Services.scriptloader.loadSubScript(
-    `${rootURI}/content/scripts/__addonRef__.js`,
-    ctx,
-  );
+  try {
+    Services.scriptloader.loadSubScript(
+      `${rootURI}content/scripts/__addonRef__.js`,
+      ctx,
+    );
+    Zotero.debug("[ZVH] loaded main script ok");
+  } catch (e) {
+    Zotero.debug("[ZVH] Error loading main script: " + e);
+    throw e;
+  }
   await Zotero.__addonInstance__.hooks.onStartup();
 }
 
 async function onMainWindowLoad({ window }, reason) {
+  Zotero.debug("[ZVH] onMainWindowLoad");
+  const progressWin = new Zotero.ProgressWindow();
+  progressWin.changeHeadline("加载成功");
+  progressWin.show();
+  progressWin.startCloseTimer(3000);
+
   await Zotero.__addonInstance__?.hooks.onMainWindowLoad(window);
 }
 
