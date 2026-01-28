@@ -1,8 +1,8 @@
 {
-  "name": "zotero-plugin-template",
+  "name": "zotero-var-highlighter",
   "type": "module",
   "version": "3.1.0",
-  "description": "Zotero Plugin Template",
+  "description": "A Zotero plugin to highlight variables in PDF",
   "config": {
     "addonName": "Zotero Plugin Template",
     "addonID": "addontemplate@euclpts.com",
@@ -14,7 +14,7 @@
     "type": "git",
     "url": "git+https://github.com/windingwind/zotero-plugin-template.git"
   },
-  "author": "windingwind",
+  "author": "Your Name",
   "bugs": {
     "url": "https://github.com/windingwind/zotero-plugin-template/issues"
   },

@@ -1,6 +1,7 @@
 import { BasicTool } from "zotero-plugin-toolkit";
 import Addon from "./addon";
 import { config } from "../package.json";
+import { Highlighter } from "./modules/highlighter";
 
 const basicTool = new BasicTool();
 
@@ -12,6 +13,8 @@ if (!basicTool.getGlobal("Zotero")[config.addonInstance]) {
   });
   // @ts-expect-error - Plugin instance is not typed
   Zotero[config.addonInstance] = addon;
+
+  Highlighter.activate();
 }
 
 function defineGlobal(name: Parameters<BasicTool["getGlobal"]>[0]): void;
