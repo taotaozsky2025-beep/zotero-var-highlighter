@@ -7,6 +7,12 @@ type RenderTextSelectionPopupEvent = {
   append?: (node: Node) => void;
 };
 
+type ScrollSnapshot = {
+  scrollTop: number;
+  scrollLeft: number;
+  pageNumber?: number;
+};
+
 export class Highlighter {
   // 版本指纹：用来确认你运行的就是这份文件
   private static readonly TAG = "ZVH-highlighter-2026-01-29-r5";
@@ -17,6 +23,11 @@ export class Highlighter {
 
   // 关键：调试期必须关节流，否则只看到第一条
   private static readonly POPUP_THROTTLE_MS = 0;
+
+  // 行为开关（新增）
+  private static readonly CASE_SENSITIVE = true; // 解决 Φ vs φ 等混淆
+  private static readonly PREVENT_SCROLL = true; // 解决 find 导致的滚动
+  private static readonly RESTORE_SCROLL_DELAY_MS = 80; // 允许 PDF.js 先处理 find，再恢复滚动
 
   private static debugSeq = 0;
   private static lastPopupAt = 0;
@@ -107,18 +118,6 @@ export class Highlighter {
       return;
     }
 
-    // 0) 把 tag 注入 popup UI，肉眼确认版本
-    try {
-      if (evt.doc && typeof evt.append === "function") {
-        const el = evt.doc.createElement("div");
-        el.textContent = `tag=${this.TAG}`;
-        el.style.cssText =
-          "margin-top:6px;padding:2px 6px;border-radius:6px;font-size:11px;opacity:.85;" +
-          "background:rgba(0,0,0,.06);";
-        evt.append(el);
-      }
-    } catch {}
-
     // 1) 提取选中文本：先 params，再 fallback selection
     let selected = "";
     try {
@@ -135,8 +134,8 @@ export class Highlighter {
     if (!selected) {
       // fallback：从 iframe selection 取
       try {
-        const w = reader?._iframeWindow || reader?.contentWindow || null;
-        const sel = w?.getSelection?.();
+        const w0 = reader?._iframeWindow || reader?.contentWindow || null;
+        const sel = w0?.getSelection?.();
         selected = String(sel?.toString?.() || "").trim();
       } catch {}
       this.popup(
@@ -151,7 +150,7 @@ export class Highlighter {
       return;
     }
 
-    // 规范化空白
+    // 规范化空白（注意：不要改变大小写/不要做 Unicode 归一化，以免引入混淆）
     selected = selected.replace(/\s+/g, " ").trim();
     this.popup("selectedText", `\`${selected}\` len=${selected.length}`);
 
@@ -180,27 +179,50 @@ export class Highlighter {
       return;
     }
 
+    // 2.5) 保存滚动位置（用于阻止 find 自动滚动）
+    let snap: ScrollSnapshot | null = null;
+    if (this.PREVENT_SCROLL) {
+      snap = this.captureScroll(app);
+      this.popup(
+        "captureScroll()",
+        snap
+          ? `top=${snap.scrollTop} left=${snap.scrollLeft} page=${snap.pageNumber ?? "?"}`
+          : "FAILED",
+        1800,
+      );
+    }
+
     // 3) 清理旧的 find 高亮（PDF.js 级别）
     const cleared = this.clearPdfJsFind(app, w);
     this.popup("clearPdfJsFind()", cleared ? "OK" : "SKIP/FAILED", 1800);
 
-    // 4) 强制打开 findbar（用于肉眼确认“查找已被触发”）
-    const opened = this.dispatchEventBus(app, w, "findbaropen", {});
-    this.popup("dispatch findbaropen", opened ? "OK" : "FAILED", 1800);
+    // 4) 不再强制打开 findbar（这是导致 UI 抢焦点/体验突兀的来源之一）
+    // const opened = this.dispatchEventBus(app, w, "findbaropen", {});
+    // this.popup("dispatch findbaropen", opened ? "OK" : "FAILED", 1800);
 
     // 5) 触发 find（highlightAll = true）
+    //    关键改动：caseSensitive=true，避免 Φ 与 φ、A 与 a 等混淆
     const dispatched = this.dispatchEventBus(app, w, "find", {
       query: selected,
-      caseSensitive: false,
+      caseSensitive: this.CASE_SENSITIVE,
       highlightAll: true,
       phraseSearch: true,
       findPrevious: undefined,
     });
     this.popup(
       "dispatch find",
-      dispatched ? "OK highlightAll=true" : "FAILED",
+      dispatched
+        ? `OK highlightAll=true caseSensitive=${this.CASE_SENSITIVE}`
+        : "FAILED",
       dispatched ? 2000 : 4500,
     );
+
+    // 5.5) 恢复滚动位置：抵消 PDF.js find 的自动定位滚动
+    if (this.PREVENT_SCROLL && snap) {
+      await this.delay(this.RESTORE_SCROLL_DELAY_MS);
+      const restored = this.restoreScroll(app, snap);
+      this.popup("restoreScroll()", restored ? "OK" : "FAILED", 1800);
+    }
 
     // 6) 读回 findController 状态（用于确认 controller 是否收到 query）
     await this.delay(80);
@@ -229,6 +251,69 @@ export class Highlighter {
     } catch (e) {
       this.log(`getPdfJsApp failed: ${String(e)}`);
       return { app: null, w: null };
+    }
+  }
+
+  /**
+   * 捕获当前滚动位置（以及页码作为辅助）
+   */
+  private static captureScroll(app: any): ScrollSnapshot | null {
+    try {
+      const container =
+        app?.pdfViewer?.container ??
+        app?.appConfig?.mainContainer ??
+        app?.appConfig?.viewerContainer ??
+        null;
+
+      if (!container) return null;
+
+      const pageNumber =
+        typeof app?.pdfViewer?.currentPageNumber === "number"
+          ? app.pdfViewer.currentPageNumber
+          : undefined;
+
+      return {
+        scrollTop: Number(container.scrollTop) || 0,
+        scrollLeft: Number(container.scrollLeft) || 0,
+        pageNumber,
+      };
+    } catch (e) {
+      this.log(`captureScroll failed: ${String(e)}`);
+      return null;
+    }
+  }
+
+  /**
+   * 恢复滚动位置（尽量不改变页码/视图）
+   */
+  private static restoreScroll(app: any, snap: ScrollSnapshot): boolean {
+    try {
+      const container =
+        app?.pdfViewer?.container ??
+        app?.appConfig?.mainContainer ??
+        app?.appConfig?.viewerContainer ??
+        null;
+
+      if (!container) return false;
+
+      // 优先直接恢复 scrollTop/scrollLeft
+      container.scrollTop = snap.scrollTop;
+      container.scrollLeft = snap.scrollLeft;
+
+      // 页码恢复只作为“兜底”，避免在某些布局下仅设 scrollTop 不够
+      if (
+        typeof snap.pageNumber === "number" &&
+        typeof app?.pdfViewer?.currentPageNumber === "number"
+      ) {
+        // 仅当 find 把页码改动很明显时才回写（避免额外抖动）
+        // 这里不强制判断阈值；若你观察到抖动，可加条件。
+        app.pdfViewer.currentPageNumber = snap.pageNumber;
+      }
+
+      return true;
+    } catch (e) {
+      this.log(`restoreScroll failed: ${String(e)}`);
+      return false;
     }
   }
 
@@ -275,7 +360,7 @@ export class Highlighter {
         query: "",
         highlightAll: false,
         phraseSearch: true,
-        caseSensitive: false,
+        caseSensitive: true, // 清理时无所谓，但设成 true 不会引入额外合并
         findPrevious: undefined,
       });
     } catch (e) {
