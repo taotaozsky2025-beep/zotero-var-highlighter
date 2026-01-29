@@ -71,11 +71,8 @@ README.md
 src/addon.ts
 src/hooks.ts
 src/index.ts
-src/modules/definitionAnalyzer.ts
 src/modules/examples.ts
 src/modules/highlighter.ts
-src/modules/preferenceScript.ts
-src/modules/searchEngine.ts
 src/utils/locale.ts
 src/utils/prefs.ts
 src/utils/window.ts
@@ -801,143 +798,6 @@ For more information on this, and how to apply and follow the GNU AGPL, see
 <http://www.gnu.org/licenses/>.
 </file>
 
-<file path="src/modules/definitionAnalyzer.ts">
-/**
-
- * Analyzes the textual context around a variable to find its definition.
-
- * This is a mock implementation for demonstration purposes.
-
- */
-
-export class DefinitionAnalyzer {
-
-    /**
-
-     * Analyzes the context of a symbol to find its definition.
-
-     * 
-
-     * This mock implementation gets the text of the page of the first occurrence,
-
-     * finds the symbol, and returns a snippet of the surrounding text.
-
-     * 
-
-     * @param addon The addon instance.
-
-     * @param reader The Zotero reader instance.
-
-     * @param symbol The symbol (string) to analyze.
-
-     * @param occurrences An array of search results for the symbol from `SearchEngine`.
-
-     * @returns A promise that resolves to a mock definition string.
-
-     */
-
-    static async analyze(addon: any, reader: any, symbol: string, occurrences: any[]): Promise<string> {
-
-        if (!occurrences || occurrences.length === 0) {
-
-            return `[Mock] No occurrences found for "${symbol}".`;
-
-        }
-
-
-
-        const firstOccurrence = occurrences[0];
-
-        const pageIndex = firstOccurrence.pageIndex;
-
-
-
-        try {
-
-            // Get all text from the page where the first occurrence was found.
-
-            const pageText = await reader.getPageText(pageIndex);
-
-
-
-            // Find the position of the symbol in the page text (case-insensitive for robustness).
-
-            const symbolPosition = pageText.toLowerCase().indexOf(symbol.toLowerCase());
-
-
-
-            if (symbolPosition === -1) {
-
-                // Fallback if indexOf fails, which can happen with complex text layers.
-
-                return `[Mock] Could not find text position of "${symbol}" in page ${pageIndex + 1}.`;
-
-            }
-
-
-
-            // Extract a snippet of text around the symbol.
-
-            const contextStart = Math.max(0, symbolPosition - 150);
-
-            const contextEnd = Math.min(pageText.length, symbolPosition + symbol.length + 150);
-
-            const contextSnippet = pageText.substring(contextStart, contextEnd)
-
-                .replace(/\s+/g, ' ') // Normalize whitespace for cleaner logging
-
-                .trim();
-
-
-
-            return `[Mock] Definition of "${symbol}" found in context: ...${contextSnippet}...`;
-
-
-
-        } catch (error: any) {
-
-            addon.data.ztoolkit.log(error, 'error');
-
-            return `[Mock] Error analyzing definition for "${symbol}": ${error.message}`;
-
-        }
-
-    }
-
-}
-</file>
-
-<file path="src/modules/searchEngine.ts">
-/**
- * Core search functionality for finding all occurrences of text in a PDF.
- * Relies on the Zotero 7 native PDF reader's search capabilities.
- */
-export class SearchEngine {
-    /**
-     * Searches for all occurrences of a query string in the Zotero reader.
-     * 
-     * The search is case-insensitive by default in Zotero's reader.
-     * 
-     * @param addon The addon instance.
-     * @param reader The Zotero reader instance.
-     * @param query The string to search for.
-     * @returns A promise that resolves to an array of search results (selections).
-     *          Each result is an object that can be used directly by `reader.renderHighlight()`.
-     *          It typically includes `pageIndex` and `rects`.
-     */
-    static async searchAll(addon: any, reader: any, query: string): Promise<any[]> {
-        try {
-            // Using Zotero 7's reader search API. The `{ all: true }` option ensures we get all results.
-            const results = await reader.search(query, { all: true });
-            return results;
-        } catch (error: any) {
-            addon.data.ztoolkit.log(error, 'error');
-            return [];
-        }
-    }
-}
-</file>
-
 <file path="src/utils/window.ts">
 export { isWindowAlive };
 
@@ -1138,140 +998,6 @@ pref("enable", true);
 pref("input", "This is input");
 </file>
 
-<file path="src/modules/preferenceScript.ts">
-import { config } from "../../package.json";
-import { getString } from "../utils/locale";
-
-export async function registerPrefsScripts(_window: Window) {
-  // This function is called when the prefs window is opened
-  // See addon/content/preferences.xhtml onpaneload
-  if (!addon.data.prefs) {
-    addon.data.prefs = {
-      window: _window,
-      columns: [
-        {
-          dataKey: "title",
-          label: getString("prefs-table-title"),
-          fixedWidth: true,
-          width: 100,
-        },
-        {
-          dataKey: "detail",
-          label: getString("prefs-table-detail"),
-        },
-      ],
-      rows: [
-        {
-          title: "Orange",
-          detail: "It's juicy",
-        },
-        {
-          title: "Banana",
-          detail: "It's sweet",
-        },
-        {
-          title: "Apple",
-          detail: "I mean the fruit APPLE",
-        },
-      ],
-    };
-  } else {
-    addon.data.prefs.window = _window;
-  }
-  updatePrefsUI();
-  bindPrefEvents();
-}
-
-async function updatePrefsUI() {
-  // You can initialize some UI elements on prefs window
-  // with addon.data.prefs.window.document
-  // Or bind some events to the elements
-  const renderLock = ztoolkit.getGlobal("Zotero").Promise.defer();
-  if (addon.data.prefs?.window == undefined) return;
-  const tableHelper = new ztoolkit.VirtualizedTable(addon.data.prefs?.window)
-    .setContainerId(`${config.addonRef}-table-container`)
-    .setProp({
-      id: `${config.addonRef}-prefs-table`,
-      // Do not use setLocale, as it modifies the Zotero.Intl.strings
-      // Set locales directly to columns
-      columns: addon.data.prefs?.columns,
-      showHeader: true,
-      multiSelect: true,
-      staticColumns: true,
-      disableFontSizeScaling: true,
-    })
-    .setProp("getRowCount", () => addon.data.prefs?.rows.length || 0)
-    .setProp(
-      "getRowData",
-      (index: number) =>
-        addon.data.prefs?.rows[index] || {
-          title: "no data",
-          detail: "no data",
-        }
-    )
-    // Show a progress window when selection changes
-    .setProp("onSelectionChange", (selection: any) => {
-      new ztoolkit.ProgressWindow(config.addonName)
-        .createLine({
-          text: `Selected line: ${addon.data.prefs?.rows
-            .filter((v: any, i: number) => selection.isSelected(i))
-            .map((row) => row.title)
-            .join(",")}`,
-          progress: 100,
-        })
-        .show();
-    })
-    // When pressing delete, delete selected line and refresh table.
-    // Returning false to prevent default event.
-    .setProp("onKeyDown", (event: KeyboardEvent) => {
-      if (event.key == "Delete" || (Zotero.isMac && event.key == "Backspace")) {
-        addon.data.prefs!.rows =
-          addon.data.prefs?.rows.filter(
-            (v: any, i: number) => !tableHelper.treeInstance.selection.isSelected(i)
-          ) || [];
-        tableHelper.render();
-        return false;
-      }
-      return true;
-    })
-    // For find-as-you-type
-    .setProp(
-      "getRowString",
-      (index: number) => addon.data.prefs?.rows[index].title || ""
-    )
-    // Render the table.
-    .render(-1, () => {
-      renderLock.resolve();
-    });
-  await renderLock.promise;
-  ztoolkit.log("Preference table rendered!");
-}
-
-function bindPrefEvents() {
-  addon.data
-    .prefs!.window.document?.querySelector(
-      `#zotero-prefpane-${config.addonRef}-enable`,
-    )
-    ?.addEventListener("command", (e: Event) => {
-      ztoolkit.log(e);
-      addon.data.prefs!.window.alert(
-        `Successfully changed to ${(e.target as XUL.Checkbox).checked}!`,
-      );
-    });
-
-  addon.data
-    .prefs!.window.document?.querySelector(
-      `#zotero-prefpane-${config.addonRef}-input`,
-    )
-    ?.addEventListener("change", (e: Event) => {
-      ztoolkit.log(e);
-      addon.data.prefs!.window.alert(
-        `Successfully changed to ${(e.target as HTMLInputElement).value}!`,
-      );
-    });
-}
-</file>
-
 <file path=".github/workflows/ci.yml">
 name: CI
 
@@ -1374,235 +1100,6 @@ logs
 </vbox>
 </file>
 
-<file path="addon/manifest.json">
-{
-  "manifest_version": 2,
-  "name": "__addonName__",
-  "version": "__buildVersion__",
-  "description": "__description__",
-  "homepage_url": "__homepage__",
-  "author": "__author__",
-  "icons": {
-    "48": "content/icons/favicon@0.5x.png",
-    "96": "content/icons/favicon.png"
-  },
-  "applications": {
-    "zotero": {
-      "id": "__addonID__",
-      "bootstrap": true,
-      "update_url": "__updateURL__",
-      "strict_min_version": "6.999",
-      "strict_max_version": "8.*"
-    }
-  }
-}
-</file>
-
-<file path="src/addon.ts">
-import { config } from "../package.json";
-import { ColumnOptions, DialogHelper } from "zotero-plugin-toolkit";
-import hooks from "./hooks";
-import { createZToolkit } from "./utils/ztoolkit";
-
-class Addon {
-  public data: {
-    alive: boolean;
-    config: typeof config;
-    // Env type, see build.js
-    env: "development" | "production";
-    initialized?: boolean;
-    ztoolkit: ZToolkit;
-    locale?: {
-      current: any;
-    };
-    prefs?: {
-      window: Window;
-      columns: Array<ColumnOptions>;
-      rows: Array<{ [dataKey: string]: string }>;
-    };
-    dialog?: DialogHelper;
-  };
-  // Lifecycle hooks
-  public hooks: typeof hooks;
-  // APIs
-  public api: object;
-
-  constructor() {
-    this.data = {
-      alive: true,
-      config,
-      env: __env__,
-      initialized: false,
-      ztoolkit: createZToolkit(),
-    };
-    this.hooks = hooks;
-    this.api = {};
-  }
-
-  public addToWindow(window: Window) {
-    this.showStartupNotification();
-  }
-
-  public showStartupNotification() {
-    const progressWin = new Zotero.ProgressWindow();
-    progressWin.changeHeadline("插件加载状态");
-    progressWin.addDescription("Zotero 插件已成功加载！🎉");
-    progressWin.show();
-    progressWin.startCloseTimer(3000);
-  }
-}
-
-export default Addon;
-</file>
-
-<file path="src/modules/highlighter.ts">
-import { SearchEngine } from "./searchEngine";
-import { DefinitionAnalyzer } from "./definitionAnalyzer";
-
-type Reader = any;
-
-export class Highlighter {
-  private static readonly HIGHLIGHT_COLOR = "#FDE456"; // A yellow-ish color
-  private static readonly HIGHLIGHT_TYPE = "zotero-var-highlighter-search";
-  private static currentReader?: Reader;
-  private static addon: any;
-
-  /**
-   * Activates the highlighter functionality by setting up event listeners for reader events.
-   * @param addon The main addon instance.
-   */
-  public static activate(addon: any) {
-    this.addon = addon;
-    this.addon.data.ztoolkit.log("Highlighter activated");
-
-    // Use a notifier to watch for when a reader is selected
-    this.addon.data.ztoolkit.UI.Notifier.register(
-      "reader-select",
-      this.onReaderSelect,
-      ["reader"],
-      this.addon.data.config.addonRef,
-    );
-  }
-
-  /**
-   * Handles the 'reader-select' event.
-   * @param reader The reader instance that was selected.
-   */
-  private static onReaderSelect = (reader: Reader) => {
-    if (this.currentReader) {
-      this.deactivateReader(this.currentReader);
-    }
-    this.currentReader = reader;
-    this.activateReader(reader);
-  };
-
-  /**
-   * Attaches event listeners to a specific reader instance.
-   * @param reader The reader instance.
-   */
-  private static activateReader(reader: Reader) {
-    this.addon.data.ztoolkit.log(`Attaching to reader: ${reader.id}`);
-    if (reader.isViewerLoaded) {
-      this.onViewerLoaded(reader);
-    } else {
-      reader.on("viewerLoaded", () => this.onViewerLoaded(reader));
-    }
-  }
-
-  /**
-   * Detaches event listeners from a reader instance.
-   * @param reader The reader instance.
-   */
-  private static deactivateReader(reader: Reader) {
-    this.addon.data.ztoolkit.log(`Detaching from reader: ${reader.id}`);
-    reader.off("viewerLoaded", () => this.onViewerLoaded(reader));
-    if (reader.isViewerLoaded) {
-      reader.contentWindow?.removeEventListener("mouseup", this.onMouseUp);
-    }
-  }
-
-  /**
-   * Attached when the reader's internal PDF viewer is ready.
-   * @param reader The reader instance.
-   */
-  private static onViewerLoaded = (reader: Reader) => {
-    if (!reader.isViewerLoaded) return;
-    this.addon.data.ztoolkit.log(
-      "Reader viewer loaded. Attaching event listeners.",
-    );
-    reader.contentWindow?.addEventListener("mouseup", (e: MouseEvent) =>
-      this.onMouseUp(e, reader),
-    );
-  };
-
-  /**
-   * Handles the mouseup event to detect text selection.
-   */
-  private static onMouseUp = async (event: MouseEvent, reader: Reader) => {
-    if ((event.target as HTMLElement)?.closest(".textLayer") === null) {
-      return;
-    }
-
-    const selection = reader.contentWindow?.getSelection();
-    const selectedText = selection?.toString().trim();
-
-    if (!selectedText) {
-      return;
-    }
-
-    this.addon.data.ztoolkit.log(`Text selected: "${selectedText}"`);
-    await this.clearHighlights(reader);
-
-    try {
-      const occurrences = await SearchEngine.searchAll(
-        this.addon,
-        reader,
-        selectedText,
-      );
-      if (!occurrences || occurrences.length === 0) {
-        this.addon.data.ztoolkit.log(
-          `No occurrences found for "${selectedText}"`,
-        );
-        return;
-      }
-
-      const definition = await DefinitionAnalyzer.analyze(
-        this.addon,
-        reader,
-        selectedText,
-        occurrences,
-      );
-
-      await reader.renderHighlight(
-        occurrences,
-        Highlighter.HIGHLIGHT_COLOR,
-        "",
-        Highlighter.HIGHLIGHT_TYPE,
-      );
-
-      Zotero.debug(
-        `[zotero-var-highlighter] Variable: ${selectedText}, Count: ${occurrences.length}, Definition: ${definition}`,
-      );
-    } catch (error: any) {
-      this.addon.data.ztoolkit.log(error, "error");
-    }
-  };
-
-  /**
-   * Clears all highlights created by this plugin in a given reader.
-   * @param reader The reader instance.
-   */
-  private static async clearHighlights(reader: Reader) {
-    if (!reader.isViewerLoaded) return;
-    try {
-      await reader.removeAnnotationsOfType(Highlighter.HIGHLIGHT_TYPE);
-    } catch (error: any) {
-      this.addon.data.ztoolkit.log(error, "error");
-    }
-  }
-}
-</file>
-
 <file path="src/utils/ztoolkit.ts">
 import { ZoteroToolkit } from "zotero-plugin-toolkit";
 import { config } from "../../package.json";
@@ -1686,6 +1183,589 @@ jobs:
     secrets: inherit
 </file>
 
+<file path="addon/manifest.json">
+{
+  "manifest_version": 2,
+  "name": "__addonName__",
+  "version": "__buildVersion__",
+  "description": "__description__",
+  "homepage_url": "__homepage__",
+  "author": "__author__",
+  "icons": {
+    "48": "content/icons/favicon@0.5x.png",
+    "96": "content/icons/favicon.png"
+  },
+  "applications": {
+    "zotero": {
+      "id": "__addonID__",
+      "bootstrap": true,
+      "update_url": "__updateURL__",
+      "strict_min_version": "6.999",
+      "strict_max_version": "8.*"
+    }
+  }
+}
+</file>
+
+<file path="eslint.config.mjs">
+// @ts-check Let TS check this config file
+
+import zotero from "@zotero-plugin/eslint-config";
+
+export default zotero({
+  overrides: [
+    {
+      files: ["**/*.ts"],
+      rules: {
+        // We disable this rule here because the template
+        // contains some unused examples and variables
+        "@typescript-eslint/no-unused-vars": "off",
+      },
+    },
+  ],
+});
+</file>
+
+<file path="src/addon.ts">
+import { config } from "../package.json";
+import { ColumnOptions, DialogHelper } from "zotero-plugin-toolkit";
+import hooks from "./hooks";
+import { createZToolkit } from "./utils/ztoolkit";
+
+class Addon {
+  public data: {
+    alive: boolean;
+    config: typeof config;
+    // Env type, see build.js
+    env: "development" | "production";
+    initialized?: boolean;
+    ztoolkit: ZToolkit;
+    locale?: {
+      current: any;
+    };
+    prefs?: {
+      window: Window;
+      columns: Array<ColumnOptions>;
+      rows: Array<{ [dataKey: string]: string }>;
+    };
+    dialog?: DialogHelper;
+  };
+  // Lifecycle hooks
+  public hooks: typeof hooks;
+  // APIs
+  public api: object;
+
+  constructor() {
+    this.data = {
+      alive: true,
+      config,
+      env: __env__,
+      initialized: false,
+      ztoolkit: createZToolkit(),
+    };
+    this.hooks = hooks;
+    this.api = {};
+  }
+
+  public addToWindow(window: Window) {
+    this.showStartupNotification();
+  }
+
+  public showStartupNotification() {
+    const progressWin = new Zotero.ProgressWindow();
+    progressWin.changeHeadline("插件加载状态");
+    progressWin.addDescription("Zotero 插件已成功加载！🎉");
+    progressWin.show();
+    progressWin.startCloseTimer(3000);
+  }
+}
+
+export default Addon;
+</file>
+
+<file path="src/modules/highlighter.ts">
+type Reader = any;
+
+type Occurrence = {
+  pageIndex: number;
+  rects?: any[];
+  [k: string]: any;
+};
+
+export class Highlighter {
+  private static readonly HIGHLIGHT_COLOR = "#FDE456";
+  private static readonly HIGHLIGHT_TYPE = "zotero-var-highlighter-search";
+
+  // ===== Debug switches =====
+  private static readonly DEBUG_POPUP = true; // 总开关：逐步弹窗
+  private static readonly VERBOSE_ON_EARLY_RETURN = false; // 是否在所有 early-return 也弹窗（会很吵）
+  private static debugSeq = 0;
+  private static lastPopupAt = 0;
+  private static readonly POPUP_THROTTLE_MS = 200; // 防止同一时刻刷太多提示
+
+  private static addon: any;
+  private static currentReader: Reader | null = null;
+
+  private static viewerLoadedHandlerMap = new WeakMap<Reader, () => void>();
+  private static mouseUpHandlerMap = new WeakMap<
+    Reader,
+    (e: MouseEvent) => void
+  >();
+
+  private static log(msg: string) {
+    Zotero.debug(`[zotero-var-highlighter] ${msg}`);
+  }
+
+  private static popup(step: string, detail?: string, ms = 1200) {
+    if (!this.DEBUG_POPUP) return;
+
+    const now = Date.now();
+    if (now - this.lastPopupAt < this.POPUP_THROTTLE_MS) return;
+    this.lastPopupAt = now;
+
+    const seq = ++this.debugSeq;
+    const headline = `ZVH Step ${seq}: ${step}`;
+    const desc = detail ? String(detail) : "";
+
+    try {
+      const pw = new Zotero.ProgressWindow();
+      pw.changeHeadline(headline);
+      if (desc) pw.addDescription(desc);
+      pw.show();
+      pw.startCloseTimer(ms);
+    } catch (e) {
+      // ProgressWindow 理论上很稳定；失败也不要影响主逻辑
+      this.log(`popup failed: ${String(e)}`);
+    }
+  }
+
+  /**
+   * 入口：onStartup() 中调用
+   */
+  public static activate(addon: any) {
+    this.addon = addon;
+    this.log("activate() called");
+    this.popup("activate()", "Highlighter activated");
+
+    try {
+      this.addon.data.ztoolkit.UI.Notifier.register(
+        "reader-select",
+        this.onReaderSelect,
+        ["reader"],
+        this.addon.data.config.addonRef,
+      );
+      this.popup("notifier.register", "registered reader-select");
+    } catch (e) {
+      this.popup("notifier.register FAILED", String(e), 3000);
+      this.log(`notifier.register failed: ${String(e)}`);
+    }
+  }
+
+  public static deactivate() {
+    this.popup("deactivate()", "cleanup");
+    if (this.currentReader) {
+      this.detachFromReader(this.currentReader);
+      this.currentReader = null;
+    }
+  }
+
+  private static onReaderSelect = (reader: Reader) => {
+    this.popup("onReaderSelect()", `reader=${reader ? "ok" : "null"}`);
+
+    if (!reader) return;
+
+    if (this.currentReader) {
+      this.popup("onReaderSelect()", "detaching previous reader");
+      this.detachFromReader(this.currentReader);
+    }
+    this.currentReader = reader;
+    this.attachToReader(reader);
+  };
+
+  private static attachToReader(reader: Reader) {
+    this.popup("attachToReader()", `id=${reader?.id ?? "(no id)"}`);
+
+    const handler = () => this.onViewerLoaded(reader);
+    this.viewerLoadedHandlerMap.set(reader, handler);
+
+    if (reader.isViewerLoaded) {
+      this.popup("attachToReader()", "viewer already loaded");
+      handler();
+      return;
+    }
+
+    if (typeof reader.on === "function") {
+      reader.on("viewerLoaded", handler);
+      this.popup("attachToReader()", "listener added: viewerLoaded");
+    } else {
+      this.popup("attachToReader FAILED", "reader.on is not a function", 3000);
+      this.log("reader.on is not a function; cannot listen viewerLoaded");
+    }
+  }
+
+  private static detachFromReader(reader: Reader) {
+    this.popup("detachFromReader()", `id=${reader?.id ?? "(no id)"}`);
+
+    const viewerLoadedHandler = this.viewerLoadedHandlerMap.get(reader);
+    if (viewerLoadedHandler && typeof reader.off === "function") {
+      try {
+        reader.off("viewerLoaded", viewerLoadedHandler);
+        this.popup("detachFromReader()", "listener removed: viewerLoaded");
+      } catch (e) {
+        this.popup("detach viewerLoaded FAILED", String(e), 3000);
+      }
+    }
+
+    const mouseUpHandler = this.mouseUpHandlerMap.get(reader);
+    if (mouseUpHandler && reader?.contentWindow) {
+      try {
+        reader.contentWindow.removeEventListener("mouseup", mouseUpHandler);
+        this.popup("detachFromReader()", "listener removed: mouseup");
+      } catch (e) {
+        this.popup("detach mouseup FAILED", String(e), 3000);
+      }
+    }
+  }
+
+  private static onViewerLoaded(reader: Reader) {
+    this.popup(
+      "onViewerLoaded()",
+      `isViewerLoaded=${String(reader?.isViewerLoaded)}`,
+    );
+
+    if (!reader?.isViewerLoaded) return;
+
+    const mouseUpHandler = (e: MouseEvent) => void this.onMouseUp(e, reader);
+    this.mouseUpHandlerMap.set(reader, mouseUpHandler);
+
+    try {
+      reader.contentWindow?.addEventListener("mouseup", mouseUpHandler);
+      this.popup("onViewerLoaded()", "mouseup listener attached");
+    } catch (e) {
+      this.popup("add mouseup FAILED", String(e), 3000);
+      this.log(`addEventListener mouseup failed: ${String(e)}`);
+    }
+  }
+
+  private static isInTextLayer(event: MouseEvent): boolean {
+    const t = event.target as any;
+    if (!t || typeof t.closest !== "function") return false;
+    return Boolean(t.closest(".textLayer"));
+  }
+
+  private static getSelectedText(reader: Reader): string {
+    const sel = reader?.contentWindow?.getSelection?.();
+    if (!sel || sel.isCollapsed) return "";
+    return String(sel.toString() || "").trim();
+  }
+
+  private static async onMouseUp(event: MouseEvent, reader: Reader) {
+    // 注意：这里如果 VERBOSE_ON_EARLY_RETURN=true，会刷屏
+    if (this.VERBOSE_ON_EARLY_RETURN) {
+      this.popup(
+        "onMouseUp()",
+        `target=${(event.target as any)?.className ?? "(no class)"}`,
+      );
+    }
+
+    const inTextLayer = this.isInTextLayer(event);
+    if (!inTextLayer) {
+      if (this.VERBOSE_ON_EARLY_RETURN)
+        this.popup("return", "not in .textLayer");
+      return;
+    }
+    this.popup("onMouseUp()", "in .textLayer");
+
+    const selectedText = this.getSelectedText(reader);
+    if (!selectedText) {
+      if (this.VERBOSE_ON_EARLY_RETURN)
+        this.popup("return", "no selection text");
+      return;
+    }
+    this.popup(
+      "selection",
+      `text="${selectedText}" len=${selectedText.length}`,
+    );
+
+    if (selectedText.length > 100) {
+      this.popup("return", "selection too long (>100)");
+      return;
+    }
+
+    // 1) 清理旧高亮
+    this.popup(
+      "clearHighlights()",
+      `has removeAnnotationsOfType=${typeof reader?.removeAnnotationsOfType}`,
+    );
+    await this.clearHighlights(reader);
+    this.popup("clearHighlights()", "done");
+
+    // 2) 搜索全篇
+    this.popup("searchAll()", `has search=${typeof reader?.search}`);
+    const occurrences = await this.searchAll(reader, selectedText);
+    this.popup("searchAll()", `count=${occurrences.length}`);
+
+    if (!occurrences.length) {
+      this.popup("return", `no matches for "${selectedText}"`, 1800);
+      return;
+    }
+
+    // 3) 渲染高亮
+    this.popup(
+      "renderHighlights()",
+      `has renderHighlight=${typeof reader?.renderHighlight}`,
+    );
+    const ok = await this.renderHighlights(reader, occurrences);
+    this.popup(
+      "renderHighlights()",
+      ok ? "success" : "FAILED",
+      ok ? 1200 : 3000,
+    );
+
+    if (!ok) return;
+
+    // 4) 可选：抓上下文（纯调试）
+    const context = await this.getFirstOccurrenceContext(
+      reader,
+      selectedText,
+      occurrences,
+    );
+    this.popup("context", context ? context.slice(0, 120) : "(empty)", 2500);
+  }
+
+  private static async searchAll(
+    reader: Reader,
+    query: string,
+  ): Promise<Occurrence[]> {
+    try {
+      if (typeof reader?.search !== "function") {
+        this.log("reader.search is not a function");
+        return [];
+      }
+      const results = await reader.search(query, { all: true });
+      return Array.isArray(results) ? results : [];
+    } catch (e) {
+      this.popup("searchAll EXCEPTION", String(e), 3000);
+      this.log(`searchAll failed: ${String(e)}`);
+      return [];
+    }
+  }
+
+  private static async renderHighlights(
+    reader: Reader,
+    occurrences: Occurrence[],
+  ): Promise<boolean> {
+    try {
+      if (typeof reader?.renderHighlight !== "function") {
+        this.log("reader.renderHighlight is not a function");
+        return false;
+      }
+      await reader.renderHighlight(
+        occurrences,
+        Highlighter.HIGHLIGHT_COLOR,
+        "",
+        Highlighter.HIGHLIGHT_TYPE,
+      );
+      return true;
+    } catch (e) {
+      this.popup("renderHighlights EXCEPTION", String(e), 3000);
+      this.log(`renderHighlights failed: ${String(e)}`);
+      return false;
+    }
+  }
+
+  private static async clearHighlights(reader: Reader) {
+    try {
+      if (typeof reader?.removeAnnotationsOfType !== "function") {
+        // 兼容：没有此接口就不清理
+        return;
+      }
+      await reader.removeAnnotationsOfType(Highlighter.HIGHLIGHT_TYPE);
+    } catch (e) {
+      this.popup("clearHighlights EXCEPTION", String(e), 3000);
+      this.log(`clearHighlights failed: ${String(e)}`);
+    }
+  }
+
+  private static async getFirstOccurrenceContext(
+    reader: Reader,
+    symbol: string,
+    occurrences: Occurrence[],
+  ): Promise<string> {
+    try {
+      const first = occurrences[0];
+      const pageIndex = first?.pageIndex;
+      if (typeof pageIndex !== "number") return "(no pageIndex)";
+
+      if (typeof reader?.getPageText !== "function")
+        return "(getPageText not supported)";
+      const pageText = await reader.getPageText(pageIndex);
+      if (!pageText) return "(empty pageText)";
+
+      const lower = String(pageText).toLowerCase();
+      const idx = lower.indexOf(symbol.toLowerCase());
+      if (idx < 0) return "(symbol not found in pageText)";
+
+      const start = Math.max(0, idx - 60);
+      const end = Math.min(pageText.length, idx + symbol.length + 60);
+      return String(pageText).slice(start, end).replace(/\s+/g, " ").trim();
+    } catch (e) {
+      return `(context error: ${String(e)})`;
+    }
+  }
+}
+</file>
+
+<file path="src/utils/locale.ts">
+import { config } from "../../package.json";
+import { FluentMessageId } from "../../typings/i10n";
+
+export { initLocale, getString, getLocaleID };
+
+/**
+ * Initialize locale data
+ */
+function initLocale() {
+  const l10n = new (
+    typeof Localization === "undefined"
+      ? ztoolkit.getGlobal("Localization")
+      : Localization
+  )([`${config.addonRef}-addon.ftl`], true);
+  addon.data.locale = {
+    current: l10n,
+  };
+}
+
+/**
+ * Get locale string, see https://firefox-source-docs.mozilla.org/l10n/fluent/tutorial.html#fluent-translation-list-ftl
+ * @param localString ftl key
+ * @param options.branch branch name
+ * @param options.args args
+ * @example
+ * ```ftl
+ * # addon.ftl
+ * addon-static-example = This is default branch!
+ *     .branch-example = This is a branch under addon-static-example!
+ * addon-dynamic-example =
+    { $count ->
+        [one] I have { $count } apple
+       *[other] I have { $count } apples
+    }
+ * ```
+ * ```js
+ * getString("addon-static-example"); // This is default branch!
+ * getString("addon-static-example", { branch: "branch-example" }); // This is a branch under addon-static-example!
+ * getString("addon-dynamic-example", { args: { count: 1 } }); // I have 1 apple
+ * getString("addon-dynamic-example", { args: { count: 2 } }); // I have 2 apples
+ * ```
+ */
+function getString(localString: FluentMessageId): string;
+function getString(localString: FluentMessageId, branch: string): string;
+function getString(
+  localeString: FluentMessageId,
+  options: { branch?: string | undefined; args?: Record<string, unknown> },
+): string;
+function getString(...inputs: any[]) {
+  if (inputs.length === 1) {
+    return _getString(inputs[0]);
+  } else if (inputs.length === 2) {
+    if (typeof inputs[1] === "string") {
+      return _getString(inputs[0], { branch: inputs[1] });
+    } else {
+      return _getString(inputs[0], inputs[1]);
+    }
+  } else {
+    throw new Error("Invalid arguments");
+  }
+}
+
+interface Pattern {
+  value: string | null;
+  attributes: Array<{
+    name: string;
+    value: string;
+  }> | null;
+}
+
+function _getString(
+  localeString: FluentMessageId,
+  options: { branch?: string | undefined; args?: Record<string, unknown> } = {},
+): string {
+  const localStringWithPrefix = `${config.addonRef}-${localeString}`;
+  const { branch, args } = options;
+  const pattern = addon.data.locale?.current.formatMessagesSync([
+    { id: localStringWithPrefix, args },
+  ])[0] as Pattern;
+
+  if (!pattern) {
+    return localStringWithPrefix;
+  }
+  if (branch && pattern.attributes) {
+    return (
+      pattern.attributes.find((attr) => attr.name === branch)?.value ||
+      localStringWithPrefix
+    );
+  } else {
+    return pattern.value || localStringWithPrefix;
+  }
+}
+
+function getLocaleID(id: FluentMessageId) {
+  return `${config.addonRef}-${id}`;
+}
+</file>
+
+<file path="zotero-plugin.config.ts">
+import { defineConfig } from "zotero-plugin-scaffold";
+import pkg from "./package.json";
+
+export default defineConfig({
+  source: ["src", "addon"],
+  dist: ".scaffold/build",
+  name: pkg.config.addonName,
+  id: pkg.config.addonID,
+  namespace: pkg.config.addonRef,
+  updateURL: `https://github.com/{{owner}}/{{repo}}/releases/download/release/${
+    pkg.version.includes("-") ? "update-beta.json" : "update.json"
+  }`,
+  xpiDownloadLink:
+    "https://github.com/{{owner}}/{{repo}}/releases/download/v{{version}}/{{xpiName}}.xpi",
+
+  build: {
+    assets: ["addon/**/*.*"],
+    define: {
+      ...pkg.config,
+      author: pkg.author,
+      description: pkg.description,
+      homepage: pkg.homepage,
+      buildVersion: pkg.version,
+      buildTime: "{{buildTime}}",
+    },
+    prefs: {
+      prefix: pkg.config.prefsPrefix,
+    },
+    esbuildOptions: [
+      {
+        entryPoints: ["src/index.ts"],
+        define: {
+          __env__: `"${process.env.NODE_ENV}"`,
+        },
+        bundle: true,
+        target: "firefox115",
+        outfile: `.scaffold/build/addon/content/scripts/${pkg.config.addonRef}.js`,
+      },
+    ],
+  },
+
+  test: {
+    waitForPlugin: `() => Zotero.${pkg.config.addonInstance}.data.initialized`,
+  },
+
+  // If you need to see a more detailed log, uncomment the following line:
+  // logLevel: "trace",
+});
+</file>
+
 <file path="addon/bootstrap.js">
 /**
  * Most of this code is from Zotero team's official Make It Red example[1]
@@ -1699,6 +1779,7 @@ var chromeHandle;
 function install(data, reason) {}
 
 async function startup({ id, version, resourceURI, rootURI }, reason) {
+  Zotero.debug("[ZVH] startup begin");
   var aomStartup = Components.classes[
     "@mozilla.org/addons/addon-manager-startup;1"
   ].getService(Components.interfaces.amIAddonManagerStartup);
@@ -1707,23 +1788,62 @@ async function startup({ id, version, resourceURI, rootURI }, reason) {
     ["content", "__addonRef__", rootURI + "content/"],
   ]);
 
+  const safeConsole = (typeof console !== "undefined" && console) || {
+    log: (...args) => Zotero.debug(args.map(String).join(" ")),
+    info: (...args) => Zotero.debug(args.map(String).join(" ")),
+    warn: (...args) => Zotero.debug(args.map(String).join(" ")),
+    error: (...args) => {
+      try {
+        Zotero.logError(
+          args[0] instanceof Error
+            ? args[0]
+            : new Error(args.map(String).join(" ")),
+        );
+      } catch (e) {
+        Zotero.debug("console.error fallback: " + String(e));
+      }
+    },
+  };
+
   /**
    * Global variables for plugin code.
    * The `_globalThis` is the global root variable of the plugin sandbox environment
    * and all child variables assigned to it is globally accessible.
    * See `src/index.ts` for details.
    */
-  const ctx = { rootURI };
+  const ctx = {
+    rootURI,
+    Zotero,
+    Services,
+    Components,
+    console: safeConsole,
+    setTimeout,
+    clearTimeout,
+    setInterval,
+    clearInterval,
+  };
   ctx._globalThis = ctx;
 
-  Services.scriptloader.loadSubScript(
-    `${rootURI}/content/scripts/__addonRef__.js`,
-    ctx,
-  );
+  try {
+    Services.scriptloader.loadSubScript(
+      `${rootURI}content/scripts/__addonRef__.js`,
+      ctx,
+    );
+    Zotero.debug("[ZVH] loaded main script ok");
+  } catch (e) {
+    Zotero.debug("[ZVH] Error loading main script: " + e);
+    throw e;
+  }
   await Zotero.__addonInstance__.hooks.onStartup();
 }
 
 async function onMainWindowLoad({ window }, reason) {
+  Zotero.debug("[ZVH] onMainWindowLoad");
+  const progressWin = new Zotero.ProgressWindow();
+  progressWin.changeHeadline("加载成功");
+  progressWin.show();
+  progressWin.startCloseTimer(3000);
+
   await Zotero.__addonInstance__?.hooks.onMainWindowLoad(window);
 }
 
@@ -2163,175 +2283,6 @@ Cette section montre la structure des répertoires d'un modèle.
 Utilisez ce code sous AGPL. Aucune garantie n'est fournie. Gardez à l'esprit les lois de votre pays !
 
 Si vous souhaitez modifier la licence, veuillez me contacter à l'adresse suivante : <wyzlshx@foxmail.com>
-</file>
-
-<file path="eslint.config.mjs">
-// @ts-check Let TS check this config file
-
-import zotero from "@zotero-plugin/eslint-config";
-
-export default zotero({
-  overrides: [
-    {
-      files: ["**/*.ts"],
-      rules: {
-        // We disable this rule here because the template
-        // contains some unused examples and variables
-        "@typescript-eslint/no-unused-vars": "off",
-      },
-    },
-  ],
-});
-</file>
-
-<file path="src/utils/locale.ts">
-import { config } from "../../package.json";
-import { FluentMessageId } from "../../typings/i10n";
-
-export { initLocale, getString, getLocaleID };
-
-/**
- * Initialize locale data
- */
-function initLocale() {
-  const l10n = new (
-    typeof Localization === "undefined"
-      ? ztoolkit.getGlobal("Localization")
-      : Localization
-  )([`${config.addonRef}-addon.ftl`], true);
-  addon.data.locale = {
-    current: l10n,
-  };
-}
-
-/**
- * Get locale string, see https://firefox-source-docs.mozilla.org/l10n/fluent/tutorial.html#fluent-translation-list-ftl
- * @param localString ftl key
- * @param options.branch branch name
- * @param options.args args
- * @example
- * ```ftl
- * # addon.ftl
- * addon-static-example = This is default branch!
- *     .branch-example = This is a branch under addon-static-example!
- * addon-dynamic-example =
-    { $count ->
-        [one] I have { $count } apple
-       *[other] I have { $count } apples
-    }
- * ```
- * ```js
- * getString("addon-static-example"); // This is default branch!
- * getString("addon-static-example", { branch: "branch-example" }); // This is a branch under addon-static-example!
- * getString("addon-dynamic-example", { args: { count: 1 } }); // I have 1 apple
- * getString("addon-dynamic-example", { args: { count: 2 } }); // I have 2 apples
- * ```
- */
-function getString(localString: FluentMessageId): string;
-function getString(localString: FluentMessageId, branch: string): string;
-function getString(
-  localeString: FluentMessageId,
-  options: { branch?: string | undefined; args?: Record<string, unknown> },
-): string;
-function getString(...inputs: any[]) {
-  if (inputs.length === 1) {
-    return _getString(inputs[0]);
-  } else if (inputs.length === 2) {
-    if (typeof inputs[1] === "string") {
-      return _getString(inputs[0], { branch: inputs[1] });
-    } else {
-      return _getString(inputs[0], inputs[1]);
-    }
-  } else {
-    throw new Error("Invalid arguments");
-  }
-}
-
-interface Pattern {
-  value: string | null;
-  attributes: Array<{
-    name: string;
-    value: string;
-  }> | null;
-}
-
-function _getString(
-  localeString: FluentMessageId,
-  options: { branch?: string | undefined; args?: Record<string, unknown> } = {},
-): string {
-  const localStringWithPrefix = `${config.addonRef}-${localeString}`;
-  const { branch, args } = options;
-  const pattern = addon.data.locale?.current.formatMessagesSync([
-    { id: localStringWithPrefix, args },
-  ])[0] as Pattern;
-
-  if (!pattern) {
-    return localStringWithPrefix;
-  }
-  if (branch && pattern.attributes) {
-    return (
-      pattern.attributes.find((attr) => attr.name === branch)?.value ||
-      localStringWithPrefix
-    );
-  } else {
-    return pattern.value || localStringWithPrefix;
-  }
-}
-
-function getLocaleID(id: FluentMessageId) {
-  return `${config.addonRef}-${id}`;
-}
-</file>
-
-<file path="zotero-plugin.config.ts">
-import { defineConfig } from "zotero-plugin-scaffold";
-import pkg from "./package.json";
-
-export default defineConfig({
-  source: ["src", "addon"],
-  dist: ".scaffold/build",
-  name: pkg.config.addonName,
-  id: pkg.config.addonID,
-  namespace: pkg.config.addonRef,
-  updateURL: `https://github.com/{{owner}}/{{repo}}/releases/download/release/${
-    pkg.version.includes("-") ? "update-beta.json" : "update.json"
-  }`,
-  xpiDownloadLink:
-    "https://github.com/{{owner}}/{{repo}}/releases/download/v{{version}}/{{xpiName}}.xpi",
-
-  build: {
-    assets: ["addon/**/*.*"],
-    define: {
-      ...pkg.config,
-      author: pkg.author,
-      description: pkg.description,
-      homepage: pkg.homepage,
-      buildVersion: pkg.version,
-      buildTime: "{{buildTime}}",
-    },
-    prefs: {
-      prefix: pkg.config.prefsPrefix,
-    },
-    esbuildOptions: [
-      {
-        entryPoints: ["src/index.ts"],
-        define: {
-          __env__: `"${process.env.NODE_ENV}"`,
-        },
-        bundle: true,
-        target: "firefox115",
-        outfile: `.scaffold/build/addon/content/scripts/${pkg.config.addonRef}.js`,
-      },
-    ],
-  },
-
-  test: {
-    waitForPlugin: `() => Zotero.${pkg.config.addonInstance}.data.initialized`,
-  },
-
-  // If you need to see a more detailed log, uncomment the following line:
-  // logLevel: "trace",
-});
 </file>
 
 <file path="src/index.ts">
@@ -3270,7 +3221,7 @@ export default {
 {
   "name": "zotero-var-highlighter",
   "type": "module",
-  "version": "0.0.1",
+  "version": "0.0.1-debug",
   "description": "A Zotero plugin to highlight variables and trace their definitions in PDF reader.",
   "config": {
     "addonName": "Zotero Var Highlighter",

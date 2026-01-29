@@ -9,16 +9,27 @@ var chromeHandle;
 
 function install(data, reason) {}
 
+function ZVH_alert(msg) {
+  try {
+    Services.prompt.alert(null, "ZVH bootstrap", String(msg));
+  } catch (e) {}
+}
+
 async function startup({ id, version, resourceURI, rootURI }, reason) {
-  Zotero.debug("[ZVH] startup begin");
+  ZVH_alert("startup() entered");
+
   var aomStartup = Components.classes[
     "@mozilla.org/addons/addon-manager-startup;1"
   ].getService(Components.interfaces.amIAddonManagerStartup);
+
   var manifestURI = Services.io.newURI(rootURI + "manifest.json");
   chromeHandle = aomStartup.registerChrome(manifestURI, [
     ["content", "__addonRef__", rootURI + "content/"],
   ]);
 
+  ZVH_alert("registerChrome OK");
+
+  // 安全 console：避免你之前的 console is not defined
   const safeConsole = (typeof console !== "undefined" && console) || {
     log: (...args) => Zotero.debug(args.map(String).join(" ")),
     info: (...args) => Zotero.debug(args.map(String).join(" ")),
@@ -36,12 +47,7 @@ async function startup({ id, version, resourceURI, rootURI }, reason) {
     },
   };
 
-  /**
-   * Global variables for plugin code.
-   * The `_globalThis` is the global root variable of the plugin sandbox environment
-   * and all child variables assigned to it is globally accessible.
-   * See `src/index.ts` for details.
-   */
+  // 关键：把 Zotero / Services / Components 注入 sandbox
   const ctx = {
     rootURI,
     Zotero,
@@ -50,22 +56,34 @@ async function startup({ id, version, resourceURI, rootURI }, reason) {
     console: safeConsole,
     setTimeout,
     clearTimeout,
-    setInterval,
-    clearInterval,
   };
   ctx._globalThis = ctx;
 
+  // 关键：去掉 rootURI 后面的额外斜杠
+  const entry = `${rootURI}content/scripts/__addonRef__.js`;
+
   try {
-    Services.scriptloader.loadSubScript(
-      `${rootURI}content/scripts/__addonRef__.js`,
-      ctx,
-    );
-    Zotero.debug("[ZVH] loaded main script ok");
+    ZVH_alert("loadSubScript begin: " + entry);
+    Services.scriptloader.loadSubScript(entry, ctx);
+    ZVH_alert("loadSubScript OK");
   } catch (e) {
-    Zotero.debug("[ZVH] Error loading main script: " + e);
-    throw e;
+    ZVH_alert("loadSubScript FAILED: " + e);
+    try {
+      Zotero.logError(e);
+    } catch (_) {}
+    return; // 必须 return，否则继续抛更难读的错误
   }
-  await Zotero.__addonInstance__.hooks.onStartup();
+
+  try {
+    ZVH_alert("calling hooks.onStartup()");
+    await Zotero.__addonInstance__.hooks.onStartup();
+    ZVH_alert("hooks.onStartup() OK");
+  } catch (e) {
+    ZVH_alert("hooks.onStartup() FAILED: " + e);
+    try {
+      Zotero.logError(e);
+    } catch (_) {}
+  }
 }
 
 async function onMainWindowLoad({ window }, reason) {

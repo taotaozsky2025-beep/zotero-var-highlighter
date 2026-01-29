@@ -1,7 +1,7 @@
 {
   "name": "zotero-var-highlighter",
   "type": "module",
-  "version": "0.0.1",
+  "version": "0.0.2-debug",
   "description": "A Zotero plugin to highlight variables and trace their definitions in PDF reader.",
   "config": {
     "addonName": "Zotero Var Highlighter",
