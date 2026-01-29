@@ -37,6 +37,18 @@ class Addon {
     this.hooks = hooks;
     this.api = {};
   }
+
+  public addToWindow(window: Window) {
+    this.showStartupNotification();
+  }
+
+  public showStartupNotification() {
+    const progressWin = new Zotero.ProgressWindow();
+    progressWin.changeHeadline("插件加载状态");
+    progressWin.addDescription("Zotero 插件已成功加载！🎉");
+    progressWin.show();
+    progressWin.startCloseTimer(3000);
+  }
 }
 
 export default Addon;

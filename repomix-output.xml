@@ -1,0 +1,3286 @@
+This file is a merged representation of the entire codebase, combined into a single document by Repomix.
+
+<file_summary>
+This section contains a summary of this file.
+
+<purpose>
+This file contains a packed representation of the entire repository's contents.
+It is designed to be easily consumable by AI systems for analysis, code review,
+or other automated processes.
+</purpose>
+
+<file_format>
+The content is organized as follows:
+1. This summary section
+2. Repository information
+3. Directory structure
+4. Repository files (if enabled)
+5. Multiple file entries, each consisting of:
+  - File path as an attribute
+  - Full contents of the file
+</file_format>
+
+<usage_guidelines>
+- This file should be treated as read-only. Any changes should be made to the
+  original repository files, not this packed version.
+- When processing this file, use the file path to distinguish
+  between different files in the repository.
+- Be aware that this file may contain sensitive information. Handle it with
+  the same level of security as you would the original repository.
+</usage_guidelines>
+
+<notes>
+- Some files may have been excluded based on .gitignore rules and Repomix's configuration
+- Binary files are not included in this packed representation. Please refer to the Repository Structure section for a complete list of file paths, including binary files
+- Files matching patterns in .gitignore are excluded
+- Files matching default ignore patterns are excluded
+- Files are sorted by Git change count (files with more changes are at the bottom)
+</notes>
+
+</file_summary>
+
+<directory_structure>
+.env.example
+.gitattributes
+.github/dependabot.yml
+.github/renovate.json
+.github/workflows/ci.yml
+.github/workflows/issue-bot.yml
+.github/workflows/release.yml
+.gitignore
+.prettierignore
+addon/bootstrap.js
+addon/content/icons/favicon.png
+addon/content/icons/favicon@0.5x.png
+addon/content/preferences.xhtml
+addon/content/zoteroPane.css
+addon/locale/en-US/addon.ftl
+addon/locale/en-US/mainWindow.ftl
+addon/locale/en-US/preferences.ftl
+addon/locale/zh-CN/addon.ftl
+addon/locale/zh-CN/mainWindow.ftl
+addon/locale/zh-CN/preferences.ftl
+addon/manifest.json
+addon/prefs.js
+doc/README-frFR.md
+doc/README-zhCN.md
+eslint.config.mjs
+LICENSE
+package.json
+README.md
+src/addon.ts
+src/hooks.ts
+src/index.ts
+src/modules/examples.ts
+src/modules/highlighter.ts
+src/utils/locale.ts
+src/utils/prefs.ts
+src/utils/window.ts
+src/utils/ztoolkit.ts
+test/startup.test.ts
+test/tsconfig.json
+tsconfig.json
+zotero-plugin.config.ts
+</directory_structure>
+
+<files>
+This section contains the contents of the repository's files.
+
+<file path=".gitattributes">
+* text=auto eol=lf
+</file>
+
+<file path="addon/locale/en-US/addon.ftl">
+startup-begin = Addon is loading
+startup-finish = Addon is ready
+menuitem-label = Addon Template: Helper Examples
+menupopup-label = Addon Template: Menupopup
+menuitem-submenulabel = Addon Template
+menuitem-filemenulabel = Addon Template: File Menuitem
+prefs-title = Template
+prefs-table-title = Title
+prefs-table-detail = Detail
+tabpanel-lib-tab-label = Lib Tab
+tabpanel-reader-tab-label = Reader Tab
+</file>
+
+<file path="addon/locale/en-US/preferences.ftl">
+pref-title = Addon Template Example
+pref-enable =
+    .label = Enable
+pref-input = Input
+pref-help = { $name } Build { $version } { $time }
+</file>
+
+<file path="addon/locale/zh-CN/addon.ftl">
+startup-begin = 插件加载中
+startup-finish = 插件已就绪
+menuitem-label = 插件模板: 帮助工具样例
+menupopup-label = 插件模板: 弹出菜单
+menuitem-submenulabel = 插件模板：子菜单
+menuitem-filemenulabel = 插件模板: 文件菜单
+prefs-title = 插件模板
+prefs-table-title = 标题
+prefs-table-detail = 详情
+tabpanel-lib-tab-label = 库标签
+tabpanel-reader-tab-label = 阅读器标签
+</file>
+
+<file path="addon/locale/zh-CN/preferences.ftl">
+pref-title = 插件模板设置示例
+pref-enable =
+    .label = 开启
+pref-input = 输入
+pref-help = { $name } Build { $version } { $time }
+</file>
+
+<file path="LICENSE">
+GNU AFFERO GENERAL PUBLIC LICENSE
+                       Version 3, 19 November 2007
+
+ Copyright (C) 2007 Free Software Foundation, Inc. <http://fsf.org/>
+ Everyone is permitted to copy and distribute verbatim copies
+ of this license document, but changing it is not allowed.
+
+                            Preamble
+
+  The GNU Affero General Public License is a free, copyleft license for
+software and other kinds of works, specifically designed to ensure
+cooperation with the community in the case of network server software.
+
+  The licenses for most software and other practical works are designed
+to take away your freedom to share and change the works.  By contrast,
+our General Public Licenses are intended to guarantee your freedom to
+share and change all versions of a program--to make sure it remains free
+software for all its users.
+
+  When we speak of free software, we are referring to freedom, not
+price.  Our General Public Licenses are designed to make sure that you
+have the freedom to distribute copies of free software (and charge for
+them if you wish), that you receive source code or can get it if you
+want it, that you can change the software or use pieces of it in new
+free programs, and that you know you can do these things.
+
+  Developers that use our General Public Licenses protect your rights
+with two steps: (1) assert copyright on the software, and (2) offer
+you this License which gives you legal permission to copy, distribute
+and/or modify the software.
+
+  A secondary benefit of defending all users' freedom is that
+improvements made in alternate versions of the program, if they
+receive widespread use, become available for other developers to
+incorporate.  Many developers of free software are heartened and
+encouraged by the resulting cooperation.  However, in the case of
+software used on network servers, this result may fail to come about.
+The GNU General Public License permits making a modified version and
+letting the public access it on a server without ever releasing its
+source code to the public.
+
+  The GNU Affero General Public License is designed specifically to
+ensure that, in such cases, the modified source code becomes available
+to the community.  It requires the operator of a network server to
+provide the source code of the modified version running there to the
+users of that server.  Therefore, public use of a modified version, on
+a publicly accessible server, gives the public access to the source
+code of the modified version.
+
+  An older license, called the Affero General Public License and
+published by Affero, was designed to accomplish similar goals.  This is
+a different license, not a version of the Affero GPL, but Affero has
+released a new version of the Affero GPL which permits relicensing under
+this license.
+
+  The precise terms and conditions for copying, distribution and
+modification follow.
+
+                       TERMS AND CONDITIONS
+
+  0. Definitions.
+
+  "This License" refers to version 3 of the GNU Affero General Public License.
+
+  "Copyright" also means copyright-like laws that apply to other kinds of
+works, such as semiconductor masks.
+
+  "The Program" refers to any copyrightable work licensed under this
+License.  Each licensee is addressed as "you".  "Licensees" and
+"recipients" may be individuals or organizations.
+
+  To "modify" a work means to copy from or adapt all or part of the work
+in a fashion requiring copyright permission, other than the making of an
+exact copy.  The resulting work is called a "modified version" of the
+earlier work or a work "based on" the earlier work.
+
+  A "covered work" means either the unmodified Program or a work based
+on the Program.
+
+  To "propagate" a work means to do anything with it that, without
+permission, would make you directly or secondarily liable for
+infringement under applicable copyright law, except executing it on a
+computer or modifying a private copy.  Propagation includes copying,
+distribution (with or without modification), making available to the
+public, and in some countries other activities as well.
+
+  To "convey" a work means any kind of propagation that enables other
+parties to make or receive copies.  Mere interaction with a user through
+a computer network, with no transfer of a copy, is not conveying.
+
+  An interactive user interface displays "Appropriate Legal Notices"
+to the extent that it includes a convenient and prominently visible
+feature that (1) displays an appropriate copyright notice, and (2)
+tells the user that there is no warranty for the work (except to the
+extent that warranties are provided), that licensees may convey the
+work under this License, and how to view a copy of this License.  If
+the interface presents a list of user commands or options, such as a
+menu, a prominent item in the list meets this criterion.
+
+  1. Source Code.
+
+  The "source code" for a work means the preferred form of the work
+for making modifications to it.  "Object code" means any non-source
+form of a work.
+
+  A "Standard Interface" means an interface that either is an official
+standard defined by a recognized standards body, or, in the case of
+interfaces specified for a particular programming language, one that
+is widely used among developers working in that language.
+
+  The "System Libraries" of an executable work include anything, other
+than the work as a whole, that (a) is included in the normal form of
+packaging a Major Component, but which is not part of that Major
+Component, and (b) serves only to enable use of the work with that
+Major Component, or to implement a Standard Interface for which an
+implementation is available to the public in source code form.  A
+"Major Component", in this context, means a major essential component
+(kernel, window system, and so on) of the specific operating system
+(if any) on which the executable work runs, or a compiler used to
+produce the work, or an object code interpreter used to run it.
+
+  The "Corresponding Source" for a work in object code form means all
+the source code needed to generate, install, and (for an executable
+work) run the object code and to modify the work, including scripts to
+control those activities.  However, it does not include the work's
+System Libraries, or general-purpose tools or generally available free
+programs which are used unmodified in performing those activities but
+which are not part of the work.  For example, Corresponding Source
+includes interface definition files associated with source files for
+the work, and the source code for shared libraries and dynamically
+linked subprograms that the work is specifically designed to require,
+such as by intimate data communication or control flow between those
+subprograms and other parts of the work.
+
+  The Corresponding Source need not include anything that users
+can regenerate automatically from other parts of the Corresponding
+Source.
+
+  The Corresponding Source for a work in source code form is that
+same work.
+
+  2. Basic Permissions.
+
+  All rights granted under this License are granted for the term of
+copyright on the Program, and are irrevocable provided the stated
+conditions are met.  This License explicitly affirms your unlimited
+permission to run the unmodified Program.  The output from running a
+covered work is covered by this License only if the output, given its
+content, constitutes a covered work.  This License acknowledges your
+rights of fair use or other equivalent, as provided by copyright law.
+
+  You may make, run and propagate covered works that you do not
+convey, without conditions so long as your license otherwise remains
+in force.  You may convey covered works to others for the sole purpose
+of having them make modifications exclusively for you, or provide you
+with facilities for running those works, provided that you comply with
+the terms of this License in conveying all material for which you do
+not control copyright.  Those thus making or running the covered works
+for you must do so exclusively on your behalf, under your direction
+and control, on terms that prohibit them from making any copies of
+your copyrighted material outside their relationship with you.
+
+  Conveying under any other circumstances is permitted solely under
+the conditions stated below.  Sublicensing is not allowed; section 10
+makes it unnecessary.
+
+  3. Protecting Users' Legal Rights From Anti-Circumvention Law.
+
+  No covered work shall be deemed part of an effective technological
+measure under any applicable law fulfilling obligations under article
+11 of the WIPO copyright treaty adopted on 20 December 1996, or
+similar laws prohibiting or restricting circumvention of such
+measures.
+
+  When you convey a covered work, you waive any legal power to forbid
+circumvention of technological measures to the extent such circumvention
+is effected by exercising rights under this License with respect to
+the covered work, and you disclaim any intention to limit operation or
+modification of the work as a means of enforcing, against the work's
+users, your or third parties' legal rights to forbid circumvention of
+technological measures.
+
+  4. Conveying Verbatim Copies.
+
+  You may convey verbatim copies of the Program's source code as you
+receive it, in any medium, provided that you conspicuously and
+appropriately publish on each copy an appropriate copyright notice;
+keep intact all notices stating that this License and any
+non-permissive terms added in accord with section 7 apply to the code;
+keep intact all notices of the absence of any warranty; and give all
+recipients a copy of this License along with the Program.
+
+  You may charge any price or no price for each copy that you convey,
+and you may offer support or warranty protection for a fee.
+
+  5. Conveying Modified Source Versions.
+
+  You may convey a work based on the Program, or the modifications to
+produce it from the Program, in the form of source code under the
+terms of section 4, provided that you also meet all of these conditions:
+
+    a) The work must carry prominent notices stating that you modified
+    it, and giving a relevant date.
+
+    b) The work must carry prominent notices stating that it is
+    released under this License and any conditions added under section
+    7.  This requirement modifies the requirement in section 4 to
+    "keep intact all notices".
+
+    c) You must license the entire work, as a whole, under this
+    License to anyone who comes into possession of a copy.  This
+    License will therefore apply, along with any applicable section 7
+    additional terms, to the whole of the work, and all its parts,
+    regardless of how they are packaged.  This License gives no
+    permission to license the work in any other way, but it does not
+    invalidate such permission if you have separately received it.
+
+    d) If the work has interactive user interfaces, each must display
+    Appropriate Legal Notices; however, if the Program has interactive
+    interfaces that do not display Appropriate Legal Notices, your
+    work need not make them do so.
+
+  A compilation of a covered work with other separate and independent
+works, which are not by their nature extensions of the covered work,
+and which are not combined with it such as to form a larger program,
+in or on a volume of a storage or distribution medium, is called an
+"aggregate" if the compilation and its resulting copyright are not
+used to limit the access or legal rights of the compilation's users
+beyond what the individual works permit.  Inclusion of a covered work
+in an aggregate does not cause this License to apply to the other
+parts of the aggregate.
+
+  6. Conveying Non-Source Forms.
+
+  You may convey a covered work in object code form under the terms
+of sections 4 and 5, provided that you also convey the
+machine-readable Corresponding Source under the terms of this License,
+in one of these ways:
+
+    a) Convey the object code in, or embodied in, a physical product
+    (including a physical distribution medium), accompanied by the
+    Corresponding Source fixed on a durable physical medium
+    customarily used for software interchange.
+
+    b) Convey the object code in, or embodied in, a physical product
+    (including a physical distribution medium), accompanied by a
+    written offer, valid for at least three years and valid for as
+    long as you offer spare parts or customer support for that product
+    model, to give anyone who possesses the object code either (1) a
+    copy of the Corresponding Source for all the software in the
+    product that is covered by this License, on a durable physical
+    medium customarily used for software interchange, for a price no
+    more than your reasonable cost of physically performing this
+    conveying of source, or (2) access to copy the
+    Corresponding Source from a network server at no charge.
+
+    c) Convey individual copies of the object code with a copy of the
+    written offer to provide the Corresponding Source.  This
+    alternative is allowed only occasionally and noncommercially, and
+    only if you received the object code with such an offer, in accord
+    with subsection 6b.
+
+    d) Convey the object code by offering access from a designated
+    place (gratis or for a charge), and offer equivalent access to the
+    Corresponding Source in the same way through the same place at no
+    further charge.  You need not require recipients to copy the
+    Corresponding Source along with the object code.  If the place to
+    copy the object code is a network server, the Corresponding Source
+    may be on a different server (operated by you or a third party)
+    that supports equivalent copying facilities, provided you maintain
+    clear directions next to the object code saying where to find the
+    Corresponding Source.  Regardless of what server hosts the
+    Corresponding Source, you remain obligated to ensure that it is
+    available for as long as needed to satisfy these requirements.
+
+    e) Convey the object code using peer-to-peer transmission, provided
+    you inform other peers where the object code and Corresponding
+    Source of the work are being offered to the general public at no
+    charge under subsection 6d.
+
+  A separable portion of the object code, whose source code is excluded
+from the Corresponding Source as a System Library, need not be
+included in conveying the object code work.
+
+  A "User Product" is either (1) a "consumer product", which means any
+tangible personal property which is normally used for personal, family,
+or household purposes, or (2) anything designed or sold for incorporation
+into a dwelling.  In determining whether a product is a consumer product,
+doubtful cases shall be resolved in favor of coverage.  For a particular
+product received by a particular user, "normally used" refers to a
+typical or common use of that class of product, regardless of the status
+of the particular user or of the way in which the particular user
+actually uses, or expects or is expected to use, the product.  A product
+is a consumer product regardless of whether the product has substantial
+commercial, industrial or non-consumer uses, unless such uses represent
+the only significant mode of use of the product.
+
+  "Installation Information" for a User Product means any methods,
+procedures, authorization keys, or other information required to install
+and execute modified versions of a covered work in that User Product from
+a modified version of its Corresponding Source.  The information must
+suffice to ensure that the continued functioning of the modified object
+code is in no case prevented or interfered with solely because
+modification has been made.
+
+  If you convey an object code work under this section in, or with, or
+specifically for use in, a User Product, and the conveying occurs as
+part of a transaction in which the right of possession and use of the
+User Product is transferred to the recipient in perpetuity or for a
+fixed term (regardless of how the transaction is characterized), the
+Corresponding Source conveyed under this section must be accompanied
+by the Installation Information.  But this requirement does not apply
+if neither you nor any third party retains the ability to install
+modified object code on the User Product (for example, the work has
+been installed in ROM).
+
+  The requirement to provide Installation Information does not include a
+requirement to continue to provide support service, warranty, or updates
+for a work that has been modified or installed by the recipient, or for
+the User Product in which it has been modified or installed.  Access to a
+network may be denied when the modification itself materially and
+adversely affects the operation of the network or violates the rules and
+protocols for communication across the network.
+
+  Corresponding Source conveyed, and Installation Information provided,
+in accord with this section must be in a format that is publicly
+documented (and with an implementation available to the public in
+source code form), and must require no special password or key for
+unpacking, reading or copying.
+
+  7. Additional Terms.
+
+  "Additional permissions" are terms that supplement the terms of this
+License by making exceptions from one or more of its conditions.
+Additional permissions that are applicable to the entire Program shall
+be treated as though they were included in this License, to the extent
+that they are valid under applicable law.  If additional permissions
+apply only to part of the Program, that part may be used separately
+under those permissions, but the entire Program remains governed by
+this License without regard to the additional permissions.
+
+  When you convey a copy of a covered work, you may at your option
+remove any additional permissions from that copy, or from any part of
+it.  (Additional permissions may be written to require their own
+removal in certain cases when you modify the work.)  You may place
+additional permissions on material, added by you to a covered work,
+for which you have or can give appropriate copyright permission.
+
+  Notwithstanding any other provision of this License, for material you
+add to a covered work, you may (if authorized by the copyright holders of
+that material) supplement the terms of this License with terms:
+
+    a) Disclaiming warranty or limiting liability differently from the
+    terms of sections 15 and 16 of this License; or
+
+    b) Requiring preservation of specified reasonable legal notices or
+    author attributions in that material or in the Appropriate Legal
+    Notices displayed by works containing it; or
+
+    c) Prohibiting misrepresentation of the origin of that material, or
+    requiring that modified versions of such material be marked in
+    reasonable ways as different from the original version; or
+
+    d) Limiting the use for publicity purposes of names of licensors or
+    authors of the material; or
+
+    e) Declining to grant rights under trademark law for use of some
+    trade names, trademarks, or service marks; or
+
+    f) Requiring indemnification of licensors and authors of that
+    material by anyone who conveys the material (or modified versions of
+    it) with contractual assumptions of liability to the recipient, for
+    any liability that these contractual assumptions directly impose on
+    those licensors and authors.
+
+  All other non-permissive additional terms are considered "further
+restrictions" within the meaning of section 10.  If the Program as you
+received it, or any part of it, contains a notice stating that it is
+governed by this License along with a term that is a further
+restriction, you may remove that term.  If a license document contains
+a further restriction but permits relicensing or conveying under this
+License, you may add to a covered work material governed by the terms
+of that license document, provided that the further restriction does
+not survive such relicensing or conveying.
+
+  If you add terms to a covered work in accord with this section, you
+must place, in the relevant source files, a statement of the
+additional terms that apply to those files, or a notice indicating
+where to find the applicable terms.
+
+  Additional terms, permissive or non-permissive, may be stated in the
+form of a separately written license, or stated as exceptions;
+the above requirements apply either way.
+
+  8. Termination.
+
+  You may not propagate or modify a covered work except as expressly
+provided under this License.  Any attempt otherwise to propagate or
+modify it is void, and will automatically terminate your rights under
+this License (including any patent licenses granted under the third
+paragraph of section 11).
+
+  However, if you cease all violation of this License, then your
+license from a particular copyright holder is reinstated (a)
+provisionally, unless and until the copyright holder explicitly and
+finally terminates your license, and (b) permanently, if the copyright
+holder fails to notify you of the violation by some reasonable means
+prior to 60 days after the cessation.
+
+  Moreover, your license from a particular copyright holder is
+reinstated permanently if the copyright holder notifies you of the
+violation by some reasonable means, this is the first time you have
+received notice of violation of this License (for any work) from that
+copyright holder, and you cure the violation prior to 30 days after
+your receipt of the notice.
+
+  Termination of your rights under this section does not terminate the
+licenses of parties who have received copies or rights from you under
+this License.  If your rights have been terminated and not permanently
+reinstated, you do not qualify to receive new licenses for the same
+material under section 10.
+
+  9. Acceptance Not Required for Having Copies.
+
+  You are not required to accept this License in order to receive or
+run a copy of the Program.  Ancillary propagation of a covered work
+occurring solely as a consequence of using peer-to-peer transmission
+to receive a copy likewise does not require acceptance.  However,
+nothing other than this License grants you permission to propagate or
+modify any covered work.  These actions infringe copyright if you do
+not accept this License.  Therefore, by modifying or propagating a
+covered work, you indicate your acceptance of this License to do so.
+
+  10. Automatic Licensing of Downstream Recipients.
+
+  Each time you convey a covered work, the recipient automatically
+receives a license from the original licensors, to run, modify and
+propagate that work, subject to this License.  You are not responsible
+for enforcing compliance by third parties with this License.
+
+  An "entity transaction" is a transaction transferring control of an
+organization, or substantially all assets of one, or subdividing an
+organization, or merging organizations.  If propagation of a covered
+work results from an entity transaction, each party to that
+transaction who receives a copy of the work also receives whatever
+licenses to the work the party's predecessor in interest had or could
+give under the previous paragraph, plus a right to possession of the
+Corresponding Source of the work from the predecessor in interest, if
+the predecessor has it or can get it with reasonable efforts.
+
+  You may not impose any further restrictions on the exercise of the
+rights granted or affirmed under this License.  For example, you may
+not impose a license fee, royalty, or other charge for exercise of
+rights granted under this License, and you may not initiate litigation
+(including a cross-claim or counterclaim in a lawsuit) alleging that
+any patent claim is infringed by making, using, selling, offering for
+sale, or importing the Program or any portion of it.
+
+  11. Patents.
+
+  A "contributor" is a copyright holder who authorizes use under this
+License of the Program or a work on which the Program is based.  The
+work thus licensed is called the contributor's "contributor version".
+
+  A contributor's "essential patent claims" are all patent claims
+owned or controlled by the contributor, whether already acquired or
+hereafter acquired, that would be infringed by some manner, permitted
+by this License, of making, using, or selling its contributor version,
+but do not include claims that would be infringed only as a
+consequence of further modification of the contributor version.  For
+purposes of this definition, "control" includes the right to grant
+patent sublicenses in a manner consistent with the requirements of
+this License.
+
+  Each contributor grants you a non-exclusive, worldwide, royalty-free
+patent license under the contributor's essential patent claims, to
+make, use, sell, offer for sale, import and otherwise run, modify and
+propagate the contents of its contributor version.
+
+  In the following three paragraphs, a "patent license" is any express
+agreement or commitment, however denominated, not to enforce a patent
+(such as an express permission to practice a patent or covenant not to
+sue for patent infringement).  To "grant" such a patent license to a
+party means to make such an agreement or commitment not to enforce a
+patent against the party.
+
+  If you convey a covered work, knowingly relying on a patent license,
+and the Corresponding Source of the work is not available for anyone
+to copy, free of charge and under the terms of this License, through a
+publicly available network server or other readily accessible means,
+then you must either (1) cause the Corresponding Source to be so
+available, or (2) arrange to deprive yourself of the benefit of the
+patent license for this particular work, or (3) arrange, in a manner
+consistent with the requirements of this License, to extend the patent
+license to downstream recipients.  "Knowingly relying" means you have
+actual knowledge that, but for the patent license, your conveying the
+covered work in a country, or your recipient's use of the covered work
+in a country, would infringe one or more identifiable patents in that
+country that you have reason to believe are valid.
+
+  If, pursuant to or in connection with a single transaction or
+arrangement, you convey, or propagate by procuring conveyance of, a
+covered work, and grant a patent license to some of the parties
+receiving the covered work authorizing them to use, propagate, modify
+or convey a specific copy of the covered work, then the patent license
+you grant is automatically extended to all recipients of the covered
+work and works based on it.
+
+  A patent license is "discriminatory" if it does not include within
+the scope of its coverage, prohibits the exercise of, or is
+conditioned on the non-exercise of one or more of the rights that are
+specifically granted under this License.  You may not convey a covered
+work if you are a party to an arrangement with a third party that is
+in the business of distributing software, under which you make payment
+to the third party based on the extent of your activity of conveying
+the work, and under which the third party grants, to any of the
+parties who would receive the covered work from you, a discriminatory
+patent license (a) in connection with copies of the covered work
+conveyed by you (or copies made from those copies), or (b) primarily
+for and in connection with specific products or compilations that
+contain the covered work, unless you entered into that arrangement,
+or that patent license was granted, prior to 28 March 2007.
+
+  Nothing in this License shall be construed as excluding or limiting
+any implied license or other defenses to infringement that may
+otherwise be available to you under applicable patent law.
+
+  12. No Surrender of Others' Freedom.
+
+  If conditions are imposed on you (whether by court order, agreement or
+otherwise) that contradict the conditions of this License, they do not
+excuse you from the conditions of this License.  If you cannot convey a
+covered work so as to satisfy simultaneously your obligations under this
+License and any other pertinent obligations, then as a consequence you may
+not convey it at all.  For example, if you agree to terms that obligate you
+to collect a royalty for further conveying from those to whom you convey
+the Program, the only way you could satisfy both those terms and this
+License would be to refrain entirely from conveying the Program.
+
+  13. Remote Network Interaction; Use with the GNU General Public License.
+
+  Notwithstanding any other provision of this License, if you modify the
+Program, your modified version must prominently offer all users
+interacting with it remotely through a computer network (if your version
+supports such interaction) an opportunity to receive the Corresponding
+Source of your version by providing access to the Corresponding Source
+from a network server at no charge, through some standard or customary
+means of facilitating copying of software.  This Corresponding Source
+shall include the Corresponding Source for any work covered by version 3
+of the GNU General Public License that is incorporated pursuant to the
+following paragraph.
+
+  Notwithstanding any other provision of this License, you have
+permission to link or combine any covered work with a work licensed
+under version 3 of the GNU General Public License into a single
+combined work, and to convey the resulting work.  The terms of this
+License will continue to apply to the part which is the covered work,
+but the work with which it is combined will remain governed by version
+3 of the GNU General Public License.
+
+  14. Revised Versions of this License.
+
+  The Free Software Foundation may publish revised and/or new versions of
+the GNU Affero General Public License from time to time.  Such new versions
+will be similar in spirit to the present version, but may differ in detail to
+address new problems or concerns.
+
+  Each version is given a distinguishing version number.  If the
+Program specifies that a certain numbered version of the GNU Affero General
+Public License "or any later version" applies to it, you have the
+option of following the terms and conditions either of that numbered
+version or of any later version published by the Free Software
+Foundation.  If the Program does not specify a version number of the
+GNU Affero General Public License, you may choose any version ever published
+by the Free Software Foundation.
+
+  If the Program specifies that a proxy can decide which future
+versions of the GNU Affero General Public License can be used, that proxy's
+public statement of acceptance of a version permanently authorizes you
+to choose that version for the Program.
+
+  Later license versions may give you additional or different
+permissions.  However, no additional obligations are imposed on any
+author or copyright holder as a result of your choosing to follow a
+later version.
+
+  15. Disclaimer of Warranty.
+
+  THERE IS NO WARRANTY FOR THE PROGRAM, TO THE EXTENT PERMITTED BY
+APPLICABLE LAW.  EXCEPT WHEN OTHERWISE STATED IN WRITING THE COPYRIGHT
+HOLDERS AND/OR OTHER PARTIES PROVIDE THE PROGRAM "AS IS" WITHOUT WARRANTY
+OF ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING, BUT NOT LIMITED TO,
+THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+PURPOSE.  THE ENTIRE RISK AS TO THE QUALITY AND PERFORMANCE OF THE PROGRAM
+IS WITH YOU.  SHOULD THE PROGRAM PROVE DEFECTIVE, YOU ASSUME THE COST OF
+ALL NECESSARY SERVICING, REPAIR OR CORRECTION.
+
+  16. Limitation of Liability.
+
+  IN NO EVENT UNLESS REQUIRED BY APPLICABLE LAW OR AGREED TO IN WRITING
+WILL ANY COPYRIGHT HOLDER, OR ANY OTHER PARTY WHO MODIFIES AND/OR CONVEYS
+THE PROGRAM AS PERMITTED ABOVE, BE LIABLE TO YOU FOR DAMAGES, INCLUDING ANY
+GENERAL, SPECIAL, INCIDENTAL OR CONSEQUENTIAL DAMAGES ARISING OUT OF THE
+USE OR INABILITY TO USE THE PROGRAM (INCLUDING BUT NOT LIMITED TO LOSS OF
+DATA OR DATA BEING RENDERED INACCURATE OR LOSSES SUSTAINED BY YOU OR THIRD
+PARTIES OR A FAILURE OF THE PROGRAM TO OPERATE WITH ANY OTHER PROGRAMS),
+EVEN IF SUCH HOLDER OR OTHER PARTY HAS BEEN ADVISED OF THE POSSIBILITY OF
+SUCH DAMAGES.
+
+  17. Interpretation of Sections 15 and 16.
+
+  If the disclaimer of warranty and limitation of liability provided
+above cannot be given local legal effect according to their terms,
+reviewing courts shall apply local law that most closely approximates
+an absolute waiver of all civil liability in connection with the
+Program, unless a warranty or assumption of liability accompanies a
+copy of the Program in return for a fee.
+
+                     END OF TERMS AND CONDITIONS
+
+            How to Apply These Terms to Your New Programs
+
+  If you develop a new program, and you want it to be of the greatest
+possible use to the public, the best way to achieve this is to make it
+free software which everyone can redistribute and change under these terms.
+
+  To do so, attach the following notices to the program.  It is safest
+to attach them to the start of each source file to most effectively
+state the exclusion of warranty; and each file should have at least
+the "copyright" line and a pointer to where the full notice is found.
+
+    <one line to give the program's name and a brief idea of what it does.>
+    Copyright (C) <year>  <name of author>
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU Affero General Public License as published
+    by the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU Affero General Public License for more details.
+
+    You should have received a copy of the GNU Affero General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+Also add information on how to contact you by electronic and paper mail.
+
+  If your software can interact with users remotely through a computer
+network, you should also make sure that it provides a way for users to
+get its source.  For example, if your program is a web application, its
+interface could display a "Source" link that leads users to an archive
+of the code.  There are many ways you could offer source, and different
+solutions will be better for different programs; see section 13 for the
+specific requirements.
+
+  You should also get your employer (if you work as a programmer) or school,
+if any, to sign a "copyright disclaimer" for the program, if necessary.
+For more information on this, and how to apply and follow the GNU AGPL, see
+<http://www.gnu.org/licenses/>.
+</file>
+
+<file path="src/utils/window.ts">
+export { isWindowAlive };
+
+/**
+ * Check if the window is alive.
+ * Useful to prevent opening duplicate windows.
+ * @param win
+ */
+function isWindowAlive(win?: Window) {
+  return win && !Components.utils.isDeadWrapper(win) && !win.closed;
+}
+</file>
+
+<file path=".env.example">
+# Usage: 
+# Copy this file as `.env` and fill in the variables below as instructed.
+
+# If you are developing more than one plugin, you can store the bin path and 
+# profile path in the system environment variables, which can be omitted here.
+
+# The path of the Zotero binary file.
+# The path delimiter should be escaped as `\\` for win32. 
+# The path is `*/Zotero.app/Contents/MacOS/zotero` for MacOS.
+ZOTERO_PLUGIN_ZOTERO_BIN_PATH = /path/to/zotero.exe
+
+# The path of the profile used for development.
+# Start the profile manager by `/path/to/zotero.exe -p` to create a profile for development.
+# @see https://www.zotero.org/support/kb/profile_directory
+ZOTERO_PLUGIN_PROFILE_PATH = /path/to/profile
+
+# The directory where the database is located.
+# If this field is kept empty, Zotero will start with the default data.
+# @see https://www.zotero.org/support/zotero_data
+ZOTERO_PLUGIN_DATA_DIR =
+
+# Custom commands to kill Zotero processes.
+# Commands for different platforms are already built into zotero-plugin, 
+# if the built-in commands are not suitable for your needs, please modify this variable.
+# ZOTERO_PLUGIN_KILL_COMMAND = 
+
+# GitHub Token
+# For scaffold auto create release and upload assets.
+# Fill in this variable if you are publishing locally instead of CI.
+# GITHUB_TOKEN =
+</file>
+
+<file path=".github/dependabot.yml">
+# To get started with Dependabot version updates, you'll need to specify which
+# package ecosystems to update and where the package manifests are located.
+# Please see the documentation for all configuration options:
+# https://docs.github.com/github/administering-a-repository/configuration-options-for-dependency-updates
+
+version: 2
+updates:
+  - package-ecosystem: "npm" # See documentation for possible values
+    directory: "/" # Location of package manifests
+    schedule:
+      interval: "weekly"
+    groups:
+      all-non-major:
+        update-types:
+          - "minor"
+          - "patch"
+</file>
+
+<file path=".github/renovate.json">
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["github>zotero-plugin-dev/renovate-config"]
+}
+</file>
+
+<file path=".github/workflows/issue-bot.yml">
+name: Issue Bot
+
+on:
+  issues:
+    types:
+      - labeled
+  issue_comment:
+    types:
+      - created
+  schedule:
+    - cron: "30 1 * * *"
+  workflow_dispatch:
+
+permissions:
+  issues: write
+  pull-requests: write
+
+jobs:
+  issue-bot:
+    uses: zotero-plugin-dev/workflows/.github/workflows/issue-bot.yml@main
+</file>
+
+<file path=".prettierignore">
+.vscode
+build
+logs
+node_modules
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+</file>
+
+<file path="addon/content/zoteroPane.css">
+.makeItRed {
+  background-color: tomato;
+}
+</file>
+
+<file path="addon/locale/en-US/mainWindow.ftl">
+item-section-example1-head-text =
+    .label = Plugin Template: Item Info
+item-section-example1-sidenav-tooltip =
+    .tooltiptext = This is Plugin Template section (item info)
+item-section-example2-head-text =
+    .label = Plugin Template: Reader [{$status}]
+item-section-example2-sidenav-tooltip =
+    .tooltiptext = This is Plugin Template section (reader)
+item-section-example2-button-tooltip =
+    .tooltiptext = Unregister this section
+item-info-row-example-label = Example Row
+</file>
+
+<file path="addon/locale/zh-CN/mainWindow.ftl">
+item-section-example1-head-text =
+    .label = 插件模板: 条目信息
+item-section-example1-sidenav-tooltip =
+    .tooltiptext = 这是插件模板面板(条目信息)
+item-section-example2-head-text =
+    .label = 插件模板: 阅读器[{$status}]
+item-section-example2-sidenav-tooltip =
+    .tooltiptext = 这是插件模板面板(阅读器)
+item-section-example2-button-tooltip =
+    .tooltiptext = 移除此面板
+item-info-row-example-label = 示例行
+</file>
+
+<file path="src/utils/prefs.ts">
+import { config } from "../../package.json";
+
+type PluginPrefsMap = _ZoteroTypes.Prefs["PluginPrefsMap"];
+
+const PREFS_PREFIX = config.prefsPrefix;
+
+/**
+ * Get preference value.
+ * Wrapper of `Zotero.Prefs.get`.
+ * @param key
+ */
+export function getPref<K extends keyof PluginPrefsMap>(key: K) {
+  return Zotero.Prefs.get(`${PREFS_PREFIX}.${key}`, true) as PluginPrefsMap[K];
+}
+
+/**
+ * Set preference value.
+ * Wrapper of `Zotero.Prefs.set`.
+ * @param key
+ * @param value
+ */
+export function setPref<K extends keyof PluginPrefsMap>(
+  key: K,
+  value: PluginPrefsMap[K],
+) {
+  return Zotero.Prefs.set(`${PREFS_PREFIX}.${key}`, value, true);
+}
+
+/**
+ * Clear preference value.
+ * Wrapper of `Zotero.Prefs.clear`.
+ * @param key
+ */
+export function clearPref(key: string) {
+  return Zotero.Prefs.clear(`${PREFS_PREFIX}.${key}`, true);
+}
+</file>
+
+<file path="test/startup.test.ts">
+import { assert } from "chai";
+import { config } from "../package.json";
+
+describe("startup", function () {
+  it("should have plugin instance defined", function () {
+    assert.isNotEmpty(Zotero[config.addonInstance]);
+  });
+});
+</file>
+
+<file path="test/tsconfig.json">
+{
+  "extends": "../tsconfig.json"
+}
+</file>
+
+<file path="addon/prefs.js">
+pref("enable", true);
+pref("input", "This is input");
+</file>
+
+<file path=".github/workflows/ci.yml">
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_TOKEN: ${{ secrets.GitHub_TOKEN }}
+    steps:
+      - name: Setup JS
+        uses: zotero-plugin-dev/workflows/setup-js@main
+      - name: Run Lint
+        run: npm run lint:check
+
+  build:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_TOKEN: ${{ secrets.GitHub_TOKEN }}
+    steps:
+      - name: Setup JS
+        uses: zotero-plugin-dev/workflows/setup-js@main
+      - name: Run Build
+        run: npm run build
+      - name: Upload build result
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-result
+          path: .scaffold/build
+
+  test:
+    runs-on: ubuntu-latest
+    needs:
+      - build
+    steps:
+      - name: Setup JS
+        uses: zotero-plugin-dev/workflows/setup-js@main
+      - run: npm run test
+</file>
+
+<file path=".gitignore">
+# dot files
+.DS_Store
+
+# Node.js
+node_modules
+pnpm-lock.yaml
+yarn.lock
+
+# TSC
+tsconfig.tsbuildinfo
+
+# Scaffold
+.env
+.scaffold
+build
+logs
+</file>
+
+<file path="addon/content/preferences.xhtml">
+<linkset>
+  <html:link rel="localization" href="__addonRef__-preferences.ftl" />
+</linkset>
+<groupbox
+  onload="Zotero.__addonInstance__.hooks.onPrefsEvent('load', { window })"
+>
+  <label><html:h2 data-l10n-id="pref-title"></html:h2></label>
+  <checkbox
+    id="zotero-prefpane-__addonRef__-enable"
+    preference="enable"
+    data-l10n-id="pref-enable"
+  />
+  <hbox>
+    <html:label
+      for="zotero-prefpane-__addonRef__-input"
+      data-l10n-id="pref-input"
+    ></html:label>
+    <html:input
+      type="text"
+      id="zotero-prefpane-__addonRef__-input"
+      preference="input"
+    ></html:input>
+  </hbox>
+  <hbox class="virtualized-table-container" flex="1" height="300px">
+    <html:div id="__addonRef__-table-container" />
+  </hbox>
+</groupbox>
+<vbox>
+  <html:label
+    data-l10n-id="pref-help"
+    data-l10n-args='{"time": "__buildTime__","name": "__addonName__","version":"__buildVersion__"}'
+  ></html:label>
+</vbox>
+</file>
+
+<file path="src/utils/ztoolkit.ts">
+import { ZoteroToolkit } from "zotero-plugin-toolkit";
+import { config } from "../../package.json";
+
+export { createZToolkit };
+
+function createZToolkit() {
+  const _ztoolkit = new ZoteroToolkit();
+  /**
+   * Alternatively, import toolkit modules you use to minify the plugin size.
+   * You can add the modules under the `MyToolkit` class below and uncomment the following line.
+   */
+  // const _ztoolkit = new MyToolkit();
+  initZToolkit(_ztoolkit);
+  return _ztoolkit;
+}
+
+function initZToolkit(_ztoolkit: ReturnType<typeof createZToolkit>) {
+  const env = __env__;
+  _ztoolkit.basicOptions.log.prefix = `[${config.addonName}]`;
+  _ztoolkit.basicOptions.log.disableConsole = env === "production";
+  _ztoolkit.UI.basicOptions.ui.enableElementJSONLog = __env__ === "development";
+  _ztoolkit.UI.basicOptions.ui.enableElementDOMLog = __env__ === "development";
+  // Getting basicOptions.debug will load global modules like the debug bridge.
+  // since we want to deprecate it, should avoid using it unless necessary.
+  // _ztoolkit.basicOptions.debug.disableDebugBridgePassword =
+  //   __env__ === "development";
+  _ztoolkit.basicOptions.api.pluginID = config.addonID;
+  _ztoolkit.ProgressWindow.setIconURI(
+    "default",
+    `chrome://${config.addonRef}/content/icons/favicon.png`,
+  );
+}
+
+import { BasicTool, unregister } from "zotero-plugin-toolkit";
+import { UITool } from "zotero-plugin-toolkit";
+
+class MyToolkit extends BasicTool {
+  UI: UITool;
+
+  constructor() {
+    super();
+    this.UI = new UITool(this);
+  }
+
+  unregisterAll() {
+    unregister(this);
+  }
+}
+</file>
+
+<file path="tsconfig.json">
+{
+  "extends": "zotero-types/entries/sandbox/",
+  "include": ["src", "typings"],
+  "exclude": ["build", "addon"]
+}
+</file>
+
+<file path=".github/workflows/release.yml">
+name: Release
+
+on:
+  push:
+    tags:
+      - v**
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+
+jobs:
+  create-release:
+    uses: zotero-plugin-dev/workflows/.github/workflows/release-plugin.yml@main
+    # You can customize any of the inputs here.
+    # If you omit an input, its default value will be used.
+    with:
+      build: "npm run build"
+      release: "npm run release"
+    secrets: inherit
+</file>
+
+<file path="addon/manifest.json">
+{
+  "manifest_version": 2,
+  "name": "__addonName__",
+  "version": "__buildVersion__",
+  "description": "__description__",
+  "homepage_url": "__homepage__",
+  "author": "__author__",
+  "icons": {
+    "48": "content/icons/favicon@0.5x.png",
+    "96": "content/icons/favicon.png"
+  },
+  "applications": {
+    "zotero": {
+      "id": "__addonID__",
+      "bootstrap": true,
+      "update_url": "__updateURL__",
+      "strict_min_version": "6.999",
+      "strict_max_version": "8.*"
+    }
+  }
+}
+</file>
+
+<file path="eslint.config.mjs">
+// @ts-check Let TS check this config file
+
+import zotero from "@zotero-plugin/eslint-config";
+
+export default zotero({
+  overrides: [
+    {
+      files: ["**/*.ts"],
+      rules: {
+        // We disable this rule here because the template
+        // contains some unused examples and variables
+        "@typescript-eslint/no-unused-vars": "off",
+      },
+    },
+  ],
+});
+</file>
+
+<file path="src/addon.ts">
+import { config } from "../package.json";
+import { ColumnOptions, DialogHelper } from "zotero-plugin-toolkit";
+import hooks from "./hooks";
+import { createZToolkit } from "./utils/ztoolkit";
+
+class Addon {
+  public data: {
+    alive: boolean;
+    config: typeof config;
+    // Env type, see build.js
+    env: "development" | "production";
+    initialized?: boolean;
+    ztoolkit: ZToolkit;
+    locale?: {
+      current: any;
+    };
+    prefs?: {
+      window: Window;
+      columns: Array<ColumnOptions>;
+      rows: Array<{ [dataKey: string]: string }>;
+    };
+    dialog?: DialogHelper;
+  };
+  // Lifecycle hooks
+  public hooks: typeof hooks;
+  // APIs
+  public api: object;
+
+  constructor() {
+    this.data = {
+      alive: true,
+      config,
+      env: __env__,
+      initialized: false,
+      ztoolkit: createZToolkit(),
+    };
+    this.hooks = hooks;
+    this.api = {};
+  }
+
+  public addToWindow(window: Window) {
+    this.showStartupNotification();
+  }
+
+  public showStartupNotification() {
+    const progressWin = new Zotero.ProgressWindow();
+    progressWin.changeHeadline("插件加载状态");
+    progressWin.addDescription("Zotero 插件已成功加载！🎉");
+    progressWin.show();
+    progressWin.startCloseTimer(3000);
+  }
+}
+
+export default Addon;
+</file>
+
+<file path="src/modules/highlighter.ts">
+type Reader = any;
+
+type Occurrence = {
+  pageIndex: number;
+  rects?: any[];
+  [k: string]: any;
+};
+
+export class Highlighter {
+  private static readonly HIGHLIGHT_COLOR = "#FDE456";
+  private static readonly HIGHLIGHT_TYPE = "zotero-var-highlighter-search";
+
+  // ===== Debug switches =====
+  private static readonly DEBUG_POPUP = true; // 总开关：逐步弹窗
+  private static readonly VERBOSE_ON_EARLY_RETURN = false; // 是否在所有 early-return 也弹窗（会很吵）
+  private static debugSeq = 0;
+  private static lastPopupAt = 0;
+  private static readonly POPUP_THROTTLE_MS = 200; // 防止同一时刻刷太多提示
+
+  private static addon: any;
+  private static currentReader: Reader | null = null;
+
+  private static viewerLoadedHandlerMap = new WeakMap<Reader, () => void>();
+  private static mouseUpHandlerMap = new WeakMap<
+    Reader,
+    (e: MouseEvent) => void
+  >();
+
+  private static log(msg: string) {
+    Zotero.debug(`[zotero-var-highlighter] ${msg}`);
+  }
+
+  private static popup(step: string, detail?: string, ms = 1200) {
+    if (!this.DEBUG_POPUP) return;
+
+    const now = Date.now();
+    if (now - this.lastPopupAt < this.POPUP_THROTTLE_MS) return;
+    this.lastPopupAt = now;
+
+    const seq = ++this.debugSeq;
+    const headline = `ZVH Step ${seq}: ${step}`;
+    const desc = detail ? String(detail) : "";
+
+    try {
+      const pw = new Zotero.ProgressWindow();
+      pw.changeHeadline(headline);
+      if (desc) pw.addDescription(desc);
+      pw.show();
+      pw.startCloseTimer(ms);
+    } catch (e) {
+      // ProgressWindow 理论上很稳定；失败也不要影响主逻辑
+      this.log(`popup failed: ${String(e)}`);
+    }
+  }
+
+  /**
+   * 入口：onStartup() 中调用
+   */
+  public static activate(addon: any) {
+    this.addon = addon;
+    this.log("activate() called");
+    this.popup("activate()", "Highlighter activated");
+
+    try {
+      this.addon.data.ztoolkit.UI.Notifier.register(
+        "reader-select",
+        this.onReaderSelect,
+        ["reader"],
+        this.addon.data.config.addonRef,
+      );
+      this.popup("notifier.register", "registered reader-select");
+    } catch (e) {
+      this.popup("notifier.register FAILED", String(e), 3000);
+      this.log(`notifier.register failed: ${String(e)}`);
+    }
+  }
+
+  public static deactivate() {
+    this.popup("deactivate()", "cleanup");
+    if (this.currentReader) {
+      this.detachFromReader(this.currentReader);
+      this.currentReader = null;
+    }
+  }
+
+  private static onReaderSelect = (reader: Reader) => {
+    this.popup("onReaderSelect()", `reader=${reader ? "ok" : "null"}`);
+
+    if (!reader) return;
+
+    if (this.currentReader) {
+      this.popup("onReaderSelect()", "detaching previous reader");
+      this.detachFromReader(this.currentReader);
+    }
+    this.currentReader = reader;
+    this.attachToReader(reader);
+  };
+
+  private static attachToReader(reader: Reader) {
+    this.popup("attachToReader()", `id=${reader?.id ?? "(no id)"}`);
+
+    const handler = () => this.onViewerLoaded(reader);
+    this.viewerLoadedHandlerMap.set(reader, handler);
+
+    if (reader.isViewerLoaded) {
+      this.popup("attachToReader()", "viewer already loaded");
+      handler();
+      return;
+    }
+
+    if (typeof reader.on === "function") {
+      reader.on("viewerLoaded", handler);
+      this.popup("attachToReader()", "listener added: viewerLoaded");
+    } else {
+      this.popup("attachToReader FAILED", "reader.on is not a function", 3000);
+      this.log("reader.on is not a function; cannot listen viewerLoaded");
+    }
+  }
+
+  private static detachFromReader(reader: Reader) {
+    this.popup("detachFromReader()", `id=${reader?.id ?? "(no id)"}`);
+
+    const viewerLoadedHandler = this.viewerLoadedHandlerMap.get(reader);
+    if (viewerLoadedHandler && typeof reader.off === "function") {
+      try {
+        reader.off("viewerLoaded", viewerLoadedHandler);
+        this.popup("detachFromReader()", "listener removed: viewerLoaded");
+      } catch (e) {
+        this.popup("detach viewerLoaded FAILED", String(e), 3000);
+      }
+    }
+
+    const mouseUpHandler = this.mouseUpHandlerMap.get(reader);
+    if (mouseUpHandler && reader?.contentWindow) {
+      try {
+        reader.contentWindow.removeEventListener("mouseup", mouseUpHandler);
+        this.popup("detachFromReader()", "listener removed: mouseup");
+      } catch (e) {
+        this.popup("detach mouseup FAILED", String(e), 3000);
+      }
+    }
+  }
+
+  private static onViewerLoaded(reader: Reader) {
+    this.popup(
+      "onViewerLoaded()",
+      `isViewerLoaded=${String(reader?.isViewerLoaded)}`,
+    );
+
+    if (!reader?.isViewerLoaded) return;
+
+    const mouseUpHandler = (e: MouseEvent) => void this.onMouseUp(e, reader);
+    this.mouseUpHandlerMap.set(reader, mouseUpHandler);
+
+    try {
+      reader.contentWindow?.addEventListener("mouseup", mouseUpHandler);
+      this.popup("onViewerLoaded()", "mouseup listener attached");
+    } catch (e) {
+      this.popup("add mouseup FAILED", String(e), 3000);
+      this.log(`addEventListener mouseup failed: ${String(e)}`);
+    }
+  }
+
+  private static isInTextLayer(event: MouseEvent): boolean {
+    const t = event.target as any;
+    if (!t || typeof t.closest !== "function") return false;
+    return Boolean(t.closest(".textLayer"));
+  }
+
+  private static getSelectedText(reader: Reader): string {
+    const sel = reader?.contentWindow?.getSelection?.();
+    if (!sel || sel.isCollapsed) return "";
+    return String(sel.toString() || "").trim();
+  }
+
+  private static async onMouseUp(event: MouseEvent, reader: Reader) {
+    // 注意：这里如果 VERBOSE_ON_EARLY_RETURN=true，会刷屏
+    if (this.VERBOSE_ON_EARLY_RETURN) {
+      this.popup(
+        "onMouseUp()",
+        `target=${(event.target as any)?.className ?? "(no class)"}`,
+      );
+    }
+
+    const inTextLayer = this.isInTextLayer(event);
+    if (!inTextLayer) {
+      if (this.VERBOSE_ON_EARLY_RETURN)
+        this.popup("return", "not in .textLayer");
+      return;
+    }
+    this.popup("onMouseUp()", "in .textLayer");
+
+    const selectedText = this.getSelectedText(reader);
+    if (!selectedText) {
+      if (this.VERBOSE_ON_EARLY_RETURN)
+        this.popup("return", "no selection text");
+      return;
+    }
+    this.popup(
+      "selection",
+      `text="${selectedText}" len=${selectedText.length}`,
+    );
+
+    if (selectedText.length > 100) {
+      this.popup("return", "selection too long (>100)");
+      return;
+    }
+
+    // 1) 清理旧高亮
+    this.popup(
+      "clearHighlights()",
+      `has removeAnnotationsOfType=${typeof reader?.removeAnnotationsOfType}`,
+    );
+    await this.clearHighlights(reader);
+    this.popup("clearHighlights()", "done");
+
+    // 2) 搜索全篇
+    this.popup("searchAll()", `has search=${typeof reader?.search}`);
+    const occurrences = await this.searchAll(reader, selectedText);
+    this.popup("searchAll()", `count=${occurrences.length}`);
+
+    if (!occurrences.length) {
+      this.popup("return", `no matches for "${selectedText}"`, 1800);
+      return;
+    }
+
+    // 3) 渲染高亮
+    this.popup(
+      "renderHighlights()",
+      `has renderHighlight=${typeof reader?.renderHighlight}`,
+    );
+    const ok = await this.renderHighlights(reader, occurrences);
+    this.popup(
+      "renderHighlights()",
+      ok ? "success" : "FAILED",
+      ok ? 1200 : 3000,
+    );
+
+    if (!ok) return;
+
+    // 4) 可选：抓上下文（纯调试）
+    const context = await this.getFirstOccurrenceContext(
+      reader,
+      selectedText,
+      occurrences,
+    );
+    this.popup("context", context ? context.slice(0, 120) : "(empty)", 2500);
+  }
+
+  private static async searchAll(
+    reader: Reader,
+    query: string,
+  ): Promise<Occurrence[]> {
+    try {
+      if (typeof reader?.search !== "function") {
+        this.log("reader.search is not a function");
+        return [];
+      }
+      const results = await reader.search(query, { all: true });
+      return Array.isArray(results) ? results : [];
+    } catch (e) {
+      this.popup("searchAll EXCEPTION", String(e), 3000);
+      this.log(`searchAll failed: ${String(e)}`);
+      return [];
+    }
+  }
+
+  private static async renderHighlights(
+    reader: Reader,
+    occurrences: Occurrence[],
+  ): Promise<boolean> {
+    try {
+      if (typeof reader?.renderHighlight !== "function") {
+        this.log("reader.renderHighlight is not a function");
+        return false;
+      }
+      await reader.renderHighlight(
+        occurrences,
+        Highlighter.HIGHLIGHT_COLOR,
+        "",
+        Highlighter.HIGHLIGHT_TYPE,
+      );
+      return true;
+    } catch (e) {
+      this.popup("renderHighlights EXCEPTION", String(e), 3000);
+      this.log(`renderHighlights failed: ${String(e)}`);
+      return false;
+    }
+  }
+
+  private static async clearHighlights(reader: Reader) {
+    try {
+      if (typeof reader?.removeAnnotationsOfType !== "function") {
+        // 兼容：没有此接口就不清理
+        return;
+      }
+      await reader.removeAnnotationsOfType(Highlighter.HIGHLIGHT_TYPE);
+    } catch (e) {
+      this.popup("clearHighlights EXCEPTION", String(e), 3000);
+      this.log(`clearHighlights failed: ${String(e)}`);
+    }
+  }
+
+  private static async getFirstOccurrenceContext(
+    reader: Reader,
+    symbol: string,
+    occurrences: Occurrence[],
+  ): Promise<string> {
+    try {
+      const first = occurrences[0];
+      const pageIndex = first?.pageIndex;
+      if (typeof pageIndex !== "number") return "(no pageIndex)";
+
+      if (typeof reader?.getPageText !== "function")
+        return "(getPageText not supported)";
+      const pageText = await reader.getPageText(pageIndex);
+      if (!pageText) return "(empty pageText)";
+
+      const lower = String(pageText).toLowerCase();
+      const idx = lower.indexOf(symbol.toLowerCase());
+      if (idx < 0) return "(symbol not found in pageText)";
+
+      const start = Math.max(0, idx - 60);
+      const end = Math.min(pageText.length, idx + symbol.length + 60);
+      return String(pageText).slice(start, end).replace(/\s+/g, " ").trim();
+    } catch (e) {
+      return `(context error: ${String(e)})`;
+    }
+  }
+}
+</file>
+
+<file path="src/utils/locale.ts">
+import { config } from "../../package.json";
+import { FluentMessageId } from "../../typings/i10n";
+
+export { initLocale, getString, getLocaleID };
+
+/**
+ * Initialize locale data
+ */
+function initLocale() {
+  const l10n = new (
+    typeof Localization === "undefined"
+      ? ztoolkit.getGlobal("Localization")
+      : Localization
+  )([`${config.addonRef}-addon.ftl`], true);
+  addon.data.locale = {
+    current: l10n,
+  };
+}
+
+/**
+ * Get locale string, see https://firefox-source-docs.mozilla.org/l10n/fluent/tutorial.html#fluent-translation-list-ftl
+ * @param localString ftl key
+ * @param options.branch branch name
+ * @param options.args args
+ * @example
+ * ```ftl
+ * # addon.ftl
+ * addon-static-example = This is default branch!
+ *     .branch-example = This is a branch under addon-static-example!
+ * addon-dynamic-example =
+    { $count ->
+        [one] I have { $count } apple
+       *[other] I have { $count } apples
+    }
+ * ```
+ * ```js
+ * getString("addon-static-example"); // This is default branch!
+ * getString("addon-static-example", { branch: "branch-example" }); // This is a branch under addon-static-example!
+ * getString("addon-dynamic-example", { args: { count: 1 } }); // I have 1 apple
+ * getString("addon-dynamic-example", { args: { count: 2 } }); // I have 2 apples
+ * ```
+ */
+function getString(localString: FluentMessageId): string;
+function getString(localString: FluentMessageId, branch: string): string;
+function getString(
+  localeString: FluentMessageId,
+  options: { branch?: string | undefined; args?: Record<string, unknown> },
+): string;
+function getString(...inputs: any[]) {
+  if (inputs.length === 1) {
+    return _getString(inputs[0]);
+  } else if (inputs.length === 2) {
+    if (typeof inputs[1] === "string") {
+      return _getString(inputs[0], { branch: inputs[1] });
+    } else {
+      return _getString(inputs[0], inputs[1]);
+    }
+  } else {
+    throw new Error("Invalid arguments");
+  }
+}
+
+interface Pattern {
+  value: string | null;
+  attributes: Array<{
+    name: string;
+    value: string;
+  }> | null;
+}
+
+function _getString(
+  localeString: FluentMessageId,
+  options: { branch?: string | undefined; args?: Record<string, unknown> } = {},
+): string {
+  const localStringWithPrefix = `${config.addonRef}-${localeString}`;
+  const { branch, args } = options;
+  const pattern = addon.data.locale?.current.formatMessagesSync([
+    { id: localStringWithPrefix, args },
+  ])[0] as Pattern;
+
+  if (!pattern) {
+    return localStringWithPrefix;
+  }
+  if (branch && pattern.attributes) {
+    return (
+      pattern.attributes.find((attr) => attr.name === branch)?.value ||
+      localStringWithPrefix
+    );
+  } else {
+    return pattern.value || localStringWithPrefix;
+  }
+}
+
+function getLocaleID(id: FluentMessageId) {
+  return `${config.addonRef}-${id}`;
+}
+</file>
+
+<file path="zotero-plugin.config.ts">
+import { defineConfig } from "zotero-plugin-scaffold";
+import pkg from "./package.json";
+
+export default defineConfig({
+  source: ["src", "addon"],
+  dist: ".scaffold/build",
+  name: pkg.config.addonName,
+  id: pkg.config.addonID,
+  namespace: pkg.config.addonRef,
+  updateURL: `https://github.com/{{owner}}/{{repo}}/releases/download/release/${
+    pkg.version.includes("-") ? "update-beta.json" : "update.json"
+  }`,
+  xpiDownloadLink:
+    "https://github.com/{{owner}}/{{repo}}/releases/download/v{{version}}/{{xpiName}}.xpi",
+
+  build: {
+    assets: ["addon/**/*.*"],
+    define: {
+      ...pkg.config,
+      author: pkg.author,
+      description: pkg.description,
+      homepage: pkg.homepage,
+      buildVersion: pkg.version,
+      buildTime: "{{buildTime}}",
+    },
+    prefs: {
+      prefix: pkg.config.prefsPrefix,
+    },
+    esbuildOptions: [
+      {
+        entryPoints: ["src/index.ts"],
+        define: {
+          __env__: `"${process.env.NODE_ENV}"`,
+        },
+        bundle: true,
+        target: "firefox115",
+        outfile: `.scaffold/build/addon/content/scripts/${pkg.config.addonRef}.js`,
+      },
+    ],
+  },
+
+  test: {
+    waitForPlugin: `() => Zotero.${pkg.config.addonInstance}.data.initialized`,
+  },
+
+  // If you need to see a more detailed log, uncomment the following line:
+  // logLevel: "trace",
+});
+</file>
+
+<file path="addon/bootstrap.js">
+/**
+ * Most of this code is from Zotero team's official Make It Red example[1]
+ * or the Zotero 7 documentation[2].
+ * [1] https://github.com/zotero/make-it-red
+ * [2] https://www.zotero.org/support/dev/zotero_7_for_developers
+ */
+
+var chromeHandle;
+
+function install(data, reason) {}
+
+async function startup({ id, version, resourceURI, rootURI }, reason) {
+  Zotero.debug("[ZVH] startup begin");
+  var aomStartup = Components.classes[
+    "@mozilla.org/addons/addon-manager-startup;1"
+  ].getService(Components.interfaces.amIAddonManagerStartup);
+  var manifestURI = Services.io.newURI(rootURI + "manifest.json");
+  chromeHandle = aomStartup.registerChrome(manifestURI, [
+    ["content", "__addonRef__", rootURI + "content/"],
+  ]);
+
+  const safeConsole = (typeof console !== "undefined" && console) || {
+    log: (...args) => Zotero.debug(args.map(String).join(" ")),
+    info: (...args) => Zotero.debug(args.map(String).join(" ")),
+    warn: (...args) => Zotero.debug(args.map(String).join(" ")),
+    error: (...args) => {
+      try {
+        Zotero.logError(
+          args[0] instanceof Error
+            ? args[0]
+            : new Error(args.map(String).join(" ")),
+        );
+      } catch (e) {
+        Zotero.debug("console.error fallback: " + String(e));
+      }
+    },
+  };
+
+  /**
+   * Global variables for plugin code.
+   * The `_globalThis` is the global root variable of the plugin sandbox environment
+   * and all child variables assigned to it is globally accessible.
+   * See `src/index.ts` for details.
+   */
+  const ctx = {
+    rootURI,
+    Zotero,
+    Services,
+    Components,
+    console: safeConsole,
+    setTimeout,
+    clearTimeout,
+    setInterval,
+    clearInterval,
+  };
+  ctx._globalThis = ctx;
+
+  try {
+    Services.scriptloader.loadSubScript(
+      `${rootURI}content/scripts/__addonRef__.js`,
+      ctx,
+    );
+    Zotero.debug("[ZVH] loaded main script ok");
+  } catch (e) {
+    Zotero.debug("[ZVH] Error loading main script: " + e);
+    throw e;
+  }
+  await Zotero.__addonInstance__.hooks.onStartup();
+}
+
+async function onMainWindowLoad({ window }, reason) {
+  Zotero.debug("[ZVH] onMainWindowLoad");
+  const progressWin = new Zotero.ProgressWindow();
+  progressWin.changeHeadline("加载成功");
+  progressWin.show();
+  progressWin.startCloseTimer(3000);
+
+  await Zotero.__addonInstance__?.hooks.onMainWindowLoad(window);
+}
+
+async function onMainWindowUnload({ window }, reason) {
+  await Zotero.__addonInstance__?.hooks.onMainWindowUnload(window);
+}
+
+async function shutdown({ id, version, resourceURI, rootURI }, reason) {
+  if (reason === APP_SHUTDOWN) {
+    return;
+  }
+
+  await Zotero.__addonInstance__?.hooks.onShutdown();
+
+  if (chromeHandle) {
+    chromeHandle.destruct();
+    chromeHandle = null;
+  }
+}
+
+async function uninstall(data, reason) {}
+</file>
+
+<file path="doc/README-frFR.md">
+# Modèle d'extension Zotero
+
+[![zotero target version](https://img.shields.io/badge/Zotero-7-green?style=flat-square&logo=zotero&logoColor=CC2936)](https://www.zotero.org)
+[![Using Zotero Var Highlighter](https://img.shields.io/badge/Using-Zotero%20Plugin%20Template-blue?style=flat-square&logo=github)](https://github.com/windingwind/zotero-plugin-template)
+
+Ceci est un modèle pour développer une extension pour [Zotero](https://www.zotero.org/).
+
+[English](../README.md) | [简体中文](./README-zhCN.md) | [Français](./README-frFR.md)
+
+- Documentation
+  - [📖 Plugin Development Documentation](https://zotero-chinese.com/plugin-dev-guide/) (Chinese, not yet complete)
+  - [📖 Plugin Development Documentation for Zotero 7](https://www.zotero.org/support/dev/zotero_7_for_developers)
+- Outils pour le développement de pluqgins
+  - [🛠️ Zotero Plugin Toolkit](https://github.com/windingwind/zotero-plugin-toolkit) | [API Documentation](https://github.com/windingwind/zotero-plugin-toolkit/blob/master/docs/zotero-plugin-toolkit.md)
+  - [🛠️ Zotero Plugin Scaffold](https://github.com/northword/zotero-plugin-scaffold)
+  - [ℹ️ Zotero Type Definitions](https://github.com/windingwind/zotero-types)
+  - [📜 Zotero Source Code](https://github.com/zotero/zotero)
+  - [📌 Zotero Var Highlighter](https://github.com/windingwind/zotero-plugin-template) (Ce dépot)
+
+> [!TIP]
+> 👁 Surveillez ce dépôt afin d'être informé des corrections et des mises à jour.
+
+## Exetensions développées sur la base de ce modèle
+
+[![GitHub Repo stars](https://img.shields.io/github/stars/windingwind/zotero-better-notes?label=zotero-better-notes&style=flat-square)](https://github.com/windingwind/zotero-better-notes)
+[![GitHub Repo stars](https://img.shields.io/github/stars/windingwind/zotero-pdf-preview?label=zotero-pdf-preview&style=flat-square)](https://github.com/windingwind/zotero-pdf-preview)
+[![GitHub Repo stars](https://img.shields.io/github/stars/windingwind/zotero-pdf-translate?label=zotero-pdf-translate&style=flat-square)](https://github.com/windingwind/zotero-pdf-translate)
+[![GitHub Repo stars](https://img.shields.io/github/stars/windingwind/zotero-tag?label=zotero-tag&style=flat-square)](https://github.com/windingwind/zotero-tag)
+[![GitHub Repo stars](https://img.shields.io/github/stars/iShareStuff/ZoteroTheme?label=zotero-theme&style=flat-square)](https://github.com/iShareStuff/ZoteroTheme)
+[![GitHub Repo stars](https://img.shields.io/github/stars/MuiseDestiny/zotero-reference?label=zotero-reference&style=flat-square)](https://github.com/MuiseDestiny/zotero-reference)
+[![GitHub Repo stars](https://img.shields.io/github/stars/MuiseDestiny/zotero-citation?label=zotero-citation&style=flat-square)](https://github.com/MuiseDestiny/zotero-citation)
+[![GitHub Repo stars](https://img.shields.io/github/stars/MuiseDestiny/ZoteroStyle?label=zotero-style&style=flat-square)](https://github.com/MuiseDestiny/ZoteroStyle)
+[![GitHub Repo stars](https://img.shields.io/github/stars/volatile-static/Chartero?label=Chartero&style=flat-square)](https://github.com/volatile-static/Chartero)
+[![GitHub Repo stars](https://img.shields.io/github/stars/l0o0/tara?label=tara&style=flat-square)](https://github.com/l0o0/tara)
+[![GitHub Repo stars](https://img.shields.io/github/stars/redleafnew/delitemwithatt?label=delitemwithatt&style=flat-square)](https://github.com/redleafnew/delitemwithatt)
+[![GitHub Repo stars](https://img.shields.io/github/stars/redleafnew/zotero-updateifsE?label=zotero-updateifsE&style=flat-square)](https://github.com/redleafnew/zotero-updateifsE)
+[![GitHub Repo stars](https://img.shields.io/github/stars/northword/zotero-format-metadata?label=zotero-format-metadata&style=flat-square)](https://github.com/northword/zotero-format-metadata)
+[![GitHub Repo stars](https://img.shields.io/github/stars/inciteful-xyz/inciteful-zotero-plugin?label=inciteful-zotero-plugin&style=flat-square)](https://github.com/inciteful-xyz/inciteful-zotero-plugin)
+[![GitHub Repo stars](https://img.shields.io/github/stars/MuiseDestiny/zotero-gpt?label=zotero-gpt&style=flat-square)](https://github.com/MuiseDestiny/zotero-gpt)
+[![GitHub Repo stars](https://img.shields.io/github/stars/zoushucai/zotero-journalabbr?label=zotero-journalabbr&style=flat-square)](https://github.com/zoushucai/zotero-journalabbr)
+[![GitHub Repo stars](https://img.shields.io/github/stars/MuiseDestiny/zotero-figure?label=zotero-figure&style=flat-square)](https://github.com/MuiseDestiny/zotero-figure)
+[![GitHub Repo stars](https://img.shields.io/github/stars/l0o0/jasminum?label=jasminum&style=flat-square)](https://github.com/l0o0/jasminum)
+[![GitHub Repo stars](https://img.shields.io/github/stars/lifan0127/ai-research-assistant?label=ai-research-assistant&style=flat-square)](https://github.com/lifan0127/ai-research-assistant)
+[![GitHub Repo stars](https://img.shields.io/github/stars/daeh/zotero-markdb-connect?label=zotero-markdb-connect&style=flat-square)](https://github.com/daeh/zotero-markdb-connect)
+
+Si vous utilisez ce dépôt, je vous recommande de mettre le badge suivant dans votre README :
+
+[![Using Zotero Var Highlighter](https://img.shields.io/badge/Using-Zotero%20Plugin%20Template-blue?style=flat-square&logo=github)](https://github.com/windingwind/zotero-plugin-template)
+
+```md
+[![Using Zotero Var Highlighter](https://img.shields.io/badge/Using-Zotero%20Plugin%20Template-blue?style=flat-square&logo=github)](https://github.com/windingwind/zotero-plugin-template)
+```
+
+## Fonctionalités
+
+- Architecture orientée événements, basée sur la programmation fonctionnelle utilisant des squeletteq étendus ;
+- Simple et convivial, il est prêt à l'emploi.
+- ⭐ [Nuveauté !] Rechargement automatique à chaud ! Chaque fois que le code source est modifié, il est automatiquement compilé et rechargé. [Voir ici→]((#auto-hot-reload)
+- Nombreux exemples dans `src/modules/examples.ts` ; ils couvrent la plupart des usages des APIs habituellement utilisées dans les extensions (en utilisant [zotero-plugin-toolkit](https://github.com/windingwind/zotero-plugin-toolkit));
+- Support de TypeScript :
+  - Prise en charge complète de la définition des types pour l'ensemble du projet Zotero, qui est écrit en JavaScript (avec les [zotero-types](https://github.com/windingwind/zotero-types));
+  - Variables globales et configuration de l'environnement ;
+- Gestion des workflows pour le développement, la finalisation et la publication des extensions :
+  - - Génére / met à jour automatiquement l'id/version de l'extension, met à jour les configurations, et définit les variables d'environnement (`development` / `production`);
+  - Construit et recharge automatiquement le code dans Zotero ;
+  - Publie automatiquement les nouvelles versions sur GitHub.
+- Intégration avec Prettier et ES Lint (analyseur et formatteur de code).
+
+## Exemples
+
+Ce dépot fournit des exemples pour les API [zotero-plugin-toolkit](https://github.com/windingwind/zotero-plugin-toolkit).
+
+Recherchez `@example` dans `src/examples.ts`. Les exemples sont appelés dans `src/hooks.ts`.
+
+### Exemples basiques
+
+- registerNotifier
+- registerPrefs, unregisterPrefs
+
+### Exemples utilisant les raccourcis clavier
+
+- registerShortcuts
+- exampleShortcutLargerCallback
+- exampleShortcutSmallerCallback
+- exampleShortcutConflictionCallback
+
+### Exemples d'interface utilisateur (UI)
+
+![image](https://user-images.githubusercontent.com/33902321/211739774-cc5c2df8-5fd9-42f0-9cdf-0f2e5946d427.png)
+
+- registerStyleSheet (utilisé par l'extension officielle make-it-red qui sert d'exemple)
+- registerRightClickMenuItem
+- registerRightClickMenuPopup
+- registerWindowMenuWithSeprator
+- registerExtraColumn
+- registerExtraColumnWithCustomCell
+- registerCustomItemBoxRow
+- registerLibraryTabPanel
+- registerReaderTabPanel
+
+### Exemples avec des panneaux de préférences
+
+![image](https://user-images.githubusercontent.com/33902321/211737987-cd7c5c87-9177-4159-b975-dc67690d0490.png)
+
+- Liaisons avec les préférences
+
+- Événements de l'interface utilisateur
+
+- Table
+
+- Locale
+
+Voir [`src/modules/preferenceScript.ts`](../src/modules/preferenceScript.ts)
+
+### Exemples de fenêtre d'aide
+
+![image](https://user-images.githubusercontent.com/33902321/215119473-e7d0d0ef-6d96-437e-b989-4805ffcde6cf.png)
+
+- dialogExample
+- clipboardExample
+- filePickerExample
+- progressWindowExample
+- vtableExample (voir Exemples avec des panneaux de préférences)
+
+### Exemples de prompts
+
+Un module d'invite (entrée de commande contextuelle) de style Obsidian. Il accepte les commandes textuelles pour exécuter le callback, avec un affichage optionnel dans la fenêtre popup.
+
+S'active avec `Shift+P`.
+
+![image](https://user-images.githubusercontent.com/33902321/215120009-e7c7ed27-33a0-44fe-b021-06c272481a92.png)
+
+- registerAlertPromptExample
+
+## Guide de démarrage rapide
+
+### 0. Pré-requis
+
+1. Installez une version beta de Zotero: <https://www.zotero.org/support/beta_builds>
+2. Installez [Node.js latest LTS version](https://nodejs.org/en/) and [Git](https://git-scm.com/)
+
+> [!NOTE]
+> Ce guide suppose que vous avez une compréhension initiale de la structure de base et du fonctionnement des extensiosn Zotero. Si ce n'est pas le cas, veuillez vous référer à la [documentation](https://www.zotero.org/support/dev/zotero_7_for_developers)et aux exemples officiels de l'extension [Make It Red](https://github.com/zotero/make-it-red) en premier lieu.
+
+### 1. Créez votre dépôt
+
+1. Cliquez sur `Use this template`
+2. Clonez votre dépôt avec git.
+   <details >
+   <summary>💡 Démarrer votre projet avec GitHub Codespace</summary>
+
+   _GitHub CodeSpace_ vous permet de démarrer votre projet sans avoir à télécharger le code/IDE/dépendances localement.
+
+   Effectuez les étapes ci-dessus et créez votre première extension en 30 secondes!
+   - Allez en haut de la [page d'accueil](https://github.com/windingwind/zotero-plugin-template), cliquez sur le bouton vert `Use this template`, cliquez sur `Open in codespace`. ous devrez peut-être vous connecter à votre compte GitHub.
+   - Attendez que _GitHub CodeSpace_ se charge.
+
+   </details>
+
+3. Entrez dans le dossier du dépôt
+
+### 2. Configurez les paramètres du Modèle et l'environnement de développement
+
+1. Modifier les paramètres dans `./package.json`, y compris :
+
+   ```jsonc
+   {
+     "version": "0.0.0",
+     "description": "",
+     "config": {
+       "addonName": "", // name to be displayed in the plugin manager
+       "addonID": "", // ID to avoid conflict. IMPORTANT!
+       "addonRef": "", // e.g. Element ID prefix
+       "addonInstance": "", // the plugin's root instance: Zotero.${addonInstance}
+       "prefsPrefix": "extensions.zotero.${addonRef}", // the prefix of prefs
+     },
+     "repository": {
+       "type": "git",
+       "url": "git+https://github.com/your-github-name/repo-name.git",
+     },
+     "author": "Your Name",
+     "bugs": {
+       "url": "https://github.com/your-github-name/repo-name/issues",
+     },
+     "homepage": "https://github.com/your-github-name/repo-name#readme",
+   }
+   ```
+
+   > ![WARNING]
+   > Veillez à bien définir addonID et addonRef pour éviter tout conflit.
+
+   Si vous avez besoin d'héberger vos paquets XPI en dehors de GitHub, modifiez `updateURL` et ajoutez `xpiDownloadLink` dans `zotero-plugin.config.ts`.
+
+2. Copiez le fichier de la variable d'environnement. Modifiez la commandes quilance la version beta de Zotero.
+
+   > Créez un profil de développement (Optionnel)  
+   > Démarrez la version beta de Zotero avec `/path/to/zotero -p`. Créez un nouveau profil et utilisez-le comme profil de développement. Ne le faites qu'une seule fois !
+
+```sh
+cp .env.example .env
+vim .env
+```
+
+    Si vous développez plus d'une extension, vous pouvez stocker le chemin bin et le chemin profile dans les variables d'environnement du système, qui peuvent être omises ici.
+
+3. Installez les dépendances avec `npm install`
+
+   > Si vous utilisez `pnpm` comme gestionnaire de paquets pour votre projet, vous devez ajouter `public-hoist-pattern[]=*@types/bluebird*` à `.npmrc`, voir <https://github.com/windingwind/zotero-types?tab=readme-ov-file#usage>.
+
+   Si vous obtenez `npm ERR ! ERESOLVE unable to resolve dependency tree` avec `npm install`, qui est un bogue de dépendance en amont de typescript-eslint, utilisez la commande `npm i -f` pour l'installer.
+
+### 3. Codez
+
+Démarrez le serveur de développement avec `npm start`:
+
+- Il fera La pré-construction de l'extension en mode développement
+- Il démarrera Zotero avec l'extension chargée depuis `build/`
+- Il surveillera `src/**` et `addon/**`.
+  - Si `src/**` a changé, lancez esbuild et rechargez.
+  - Si `addon/**` a changé, reconstruisez l'extension (en mode développement) et recharger là.
+
+#### Rechargement automatique à chaud
+
+Fatigué des redémarrages incessants ? Oubliez-les !
+
+1. Lancez `npm start`.
+2. Coder. (Oui, c'est tout)
+
+Lorsque des changements de fichiers sont détectés dans `src` ou `addon`, l'extension 'sera automatiquement compilé et rechargé.
+
+<details style="text-indent: 2em">
+<summary>💡 Étapes pour ajouter cette fonctionnalité à une extension existante :</summary>
+
+Voir [zotero-plugin-scaffold](https://github.com/northword/zotero-plugin-scaffold).
+
+</details>
+
+#### Déboguer dans Zotero
+
+Vous pouvez également :
+
+- Tester les extraits de code dans Outils -> Développeur -> Run Javascript ;
+- Déboguer la sortie avec`Zotero.debug()`. Trouver les sorties dans Aide->Journal de débogage->Voir le journal;
+- Déboguer l'interface utilisateur. Zotero est construit sur le cadre XUL de Firefox. Déboguez l'interface utilisateur XUL avec un logiciel comme [XUL Explorer](https://udn.realityripple.com/docs/Archive/Mozilla/XUL_Explorer).
+  > Documentation de XUL : <http://www.devdoc.net/web/developer.mozilla.org/en-US/docs/XUL.html>
+
+### 4. Construction (Build)
+
+Exécutez `npm run build` construire l'extension en mode production : t le xpi pour l'installation et le code construit se trouve dans le dossier `build`.
+
+Étapes de la construction :
+
+- Créez/videz `build/`.
+- Copiez `addon/**` dans `build/addon/**`.
+- Remplacez les espaces réservés : utilisez `replace-in-file` pour remplacer les mots-clés et les configurations définis dans `package.json` dans les fichiers non-construits (`xhtml`, `json`, et al.).
+
+- Préparez les fichiers de locale pour [éviter les conflits](https://www.zotero.org/support/dev/zotero_7_for_developers#avoiding_localization_conflicts)
+- Renommer `**/*.flt` en `**/${addonRef}-*.flt`
+- Préfixez chaque message fluent[TODO] avec `addonRef-`
+- Utilisez ESBuild pour construire le code source `.ts` vers `.js`, construisez `src/index.ts` vers `./build/addon/content/scripts`.
+- (Mode production uniquement) Zipper le fichier `./build/addon` vers `./build/*.xpi`.
+- (Mode production uniquement) Préparez `update.json` ou `update-beta.json`
+
+> [!NOTE]
+>
+> **Quelle est la différence entre mode développement et production ?**
+>
+> - Cette variable d'environnement est stockée dans `Zotero.${addonInstance}.data.env`. La sortie vers la console est désactivée en mode production.
+> - Vous pouvez décider ce que les utilisateurs ne peuvent pas voir/utiliser en fonction de cette variable.
+> - En mode production, le script de construction va empaqueter l'extension et mettre à jour le fichier `update.json`.
+
+### 5. Produire une Release
+
+pour construire et produire une Release, utilisez :
+
+```shell
+# version increase, git add, commit and push
+# then on ci, npm run build, and release to GitHub
+npm run release
+```
+
+> [!NOTE]
+> Cela utilisera [Bumpp](https://github.com/antfu-collective/bumpp) pour saisir le nouveau numéro de version, modifier localement la version, exécuter tous les scripts (pré/post) version définis dans `package.json`, commit, build (optionnel), marquer le commit avec le numéro de version et pousser les commits et les tags git. Bumpp peut être configuré dans `zotero-plugin-config.ts` ; par exemple, ajoutez `release : { bumpp : { execute : « npm run build » } }` pour construire également avant de commiter.
+> Par la suite, GitHub Action reconstruira l'extensions et utilisera le script `release` de `zotero-plugin-scaffold` pour publier l'XPI sur GitHub Release. De plus, une version séparée (tag : `release`) sera créée ou mise à jour qui inclura les manifestes de mise à jour `update.json` et `update-beta.json` en tant qu'actifs. Ceux-ci seront disponibles à `https://github.com/{{owner}}/{{repo}}/releases/download/release/update*.json`.
+
+#### À propos des pré-releases
+
+Le modèle définit `prerelease` comme la version beta de l'extension, lorsque vous sélectionnez une version `prerelease` dans Bumpp (avec `-` dans le numéro de version). Le script de construction créera un nouveau `update-beta.json` pour l'utilisation de la prerelease, ce qui assure que les utilisateurs de la version normale ne seront pas en mesure de mettre à jour vers la version beta. Seuls les utilisateurs qui ont téléchargé et installé manuellement la version bêta seront en mesure de mettre à jour automatiquement vers la prochaine version bêta.
+
+Lorsque la prochaine version normale sera mise à jour, `update.json` et `update-beta.json` seront tous deux mis à jour (sur la version spéciale `release`, voir ci-dessus) afin que les utilisateurs de la version normale et de la version bêta puissent se mettre à jour vers la nouvelle version normale.
+
+> [!WARNING]
+> La distinction entre les versions des extensions compatibles avec Zotero 6 et Zotero 7 devrait être strictement faite en configurant `applications.zotero.strict_min_version` dans `addons.__addonID__.updates[]` de `update.json` respectivement, afin que Zotero le reconnaisse correctement, voir <https://www.zotero.org/support/dev/zotero_7_for_developers#updaterdf_updatesjson>.
+
+## Détails
+
+### À propos des hooks
+
+> Voir également [`src/hooks.ts`](https://github.com/windingwind/zotero-plugin-template/blob/main/src/hooks.ts)
+
+1. Lorsque l'installation/activation/démarrage est déclenché par Zotero, `bootstrap.js` > `startup` est appelé
+   - Attendez que Zotero soit prêt ;
+   - Chargez de `index.js` (l'entrée principale du code de lextension, construit à partir de `index.ts`) ;
+   - Enregistrez les ressources si Zotero 7+
+2. Dans l'entrée principale `index.js`, l'objet extension est injecté sous `Zotero` et `hooks.ts` > `onStartup` est appelé.
+   - Initialisez tout ce que vous voulez, y compris les auditeurs de notifications (hooks), les panneaux de préférences et les éléments de l'interface utilisateur.
+3. Lorsque la désinstallation/désactivation est déclenchée depuis Zotero, `bootstrap.js` > `shutdown` est appelé.
+   - `events.ts` > `onShutdown` est appelé. Cela supprime les éléments de l'interface utilisateur, les panneaux de préférences, ou tout ce qui a été créé par l'extension'.
+   - Supprimez les scripts et libérez les ressources.
+
+### À propos des variables globales
+
+> Voir aussi [`src/index.ts`](https://github.com/windingwind/zotero-plugin-template/blob/main/src/index.ts)
+
+L'extension 'bootstrappé' fonctionne dans un bac à sable, qui n'a pas de variables globales par défaut comme `Zotero` ou `window`, que nous avions l'habitude d'avoir en superposition dans la fenêtre d'environnement des extensions.
+
+Ce modèle enregistre les variables suivantes avec une portée globale :
+
+```plain
+Zotero, ZoteroPane, Zotero_Tabs, window, document, rootURI, ztoolkit, addon;
+```
+
+### Création d'une API pour les éléments de l'extension
+
+Le modèle d'extension fournit de nouvelles API pour les extensions 'bootstrappées'. Nous avons deux raisons d'utiliser ces APIs, au lieu de `createElement/createElementNS` :
+
+- En mode bootstrap, les extensions doivent nettoyer tous les éléments de l'interface utilisateur à la sortie (désactivation ou désinstallation), ce qui est très ennuyeux. En utilisant `createElement`, le modèle de l'eextensions va maintenir ces éléments. Il suffit de lancer `unregisterAll` à la sortie.
+- Zotero 7 requiert createElement()/createElementNS() → createXULElement() pour les éléments XUL restants, alors que Zotero 6 ne supporte pas `createXULElement`. L'API React.createElement-like `createElement` détecte l'espace de noms (xul/html/svg) et crée des éléments automatiquement, avec l'élément de retour dans le type d'élément TS correspondant.
+
+```ts
+createElement(document, "div"); // returns HTMLDivElement
+createElement(document, "hbox"); // returns XUL.Box
+createElement(document, "button", { namespace: "xul" }); // manually set namespace. returns XUL.Button
+```
+
+### À propos de l'API Zotero
+
+La documentation de Zotero est obsolète et incomplète. Clonez <https://github.com/zotero/zotero> et recherchez le mot-clé globalement.
+
+> ⭐Le [zotero-types](https://github.com/windingwind/zotero-types) fournit les API de Zotero les plus fréquemment utilisées. Il est inclus dans ce modèle par défaut. Votre IDE devrait fournir des indices pour la plupart des API.
+
+Une astuce pour trouver l'API que vous voulez :
+
+Recherchez le label de l'interface utilisateur dans les fichiers `.xhtml`/`.flt`, trouvez la clé correspondante dans le fichier locale. Ensuite, recherchez cette clé dans les fichiers `.js`/`.jsx`.
+
+### Structure des répertoires
+
+Cette section montre la structure des répertoires d'un modèle.
+
+- Tous les fichiers de code `.js/.ts` sont dans `./src` ;
+- Les fichiers de configuration des addons : `./addon/manifest.json` ;
+- Fichiers d'interface utilisateur : `./addon/content/*.xhtml`.
+- Les fichiers des Locales : `./addon/locale/**/*.flt` ;
+- Fichier de préférences : `./addon/prefs.js` ;
+
+```shell
+.
+|-- .github/                  # github conf
+|-- .vscode/                  # vscode conf
+|-- addon                     # static files
+|   |-- bootstrap.js
+|   |-- content
+|   |   |-- icons
+|   |   |   |-- favicon.png
+|   |   |   `-- favicon@0.5x.png
+|   |   |-- preferences.xhtml
+|   |   `-- zoteroPane.css
+|   |-- locale
+|   |   |-- en-US
+|   |   |   |-- addon.ftl
+|   |   |   |-- mainWindow.ftl
+|   |   |   `-- preferences.ftl
+|   |   `-- zh-CN
+|   |       |-- addon.ftl
+|   |       |-- mainWindow.ftl
+|   |       `-- preferences.ftl
+|   |-- manifest.json
+|   `-- prefs.js
+|-- build                         # build dir
+|-- node_modules
+|-- src                           # source code of scripts
+|   |-- addon.ts                  # base class
+|   |-- hooks.ts                  # lifecycle hooks
+|   |-- index.ts                  # main entry
+|   |-- modules                   # sub modules
+|   |   |-- examples.ts
+|   |   `-- preferenceScript.ts
+|   `-- utils                 # utilities
+|       |-- locale.ts
+|       |-- prefs.ts
+|       |-- wait.ts
+|       |-- window.ts
+|       `-- ztoolkit.ts
+|-- typings                   # ts typings
+|   `-- global.d.ts
+
+|-- .env                      # enviroment config (do not check into repo)
+|-- .env.example              # template of enviroment config, https://github.com/northword/zotero-plugin-scaffold
+|-- .gitignore                # git conf
+|-- .gitattributes            # git conf
+|-- .prettierrc               # prettier conf, https://prettier.io/
+|-- eslint.config.mjs         # eslint conf, https://eslint.org/
+|-- LICENSE
+|-- package-lock.json
+|-- package.json
+|-- tsconfig.json             # typescript conf, https://code.visualstudio.com/docs/languages/jsconfig
+|-- README.md
+`-- zotero-plugin.config.ts   # scaffold conf, https://github.com/northword/zotero-plugin-scaffold
+```
+
+## Clause de non-responsabilité
+
+Utilisez ce code sous AGPL. Aucune garantie n'est fournie. Gardez à l'esprit les lois de votre pays !
+
+Si vous souhaitez modifier la licence, veuillez me contacter à l'adresse suivante : <wyzlshx@foxmail.com>
+</file>
+
+<file path="src/index.ts">
+import { config } from "../package.json";
+import Addon from "./addon";
+
+// @ts-expect-error - Plugin instance is not typed
+if (!Zotero[config.addonInstance]) {
+  // @ts-expect-error - Plugin instance is not typed
+  Zotero[config.addonInstance] = new Addon();
+}
+</file>
+
+<file path="doc/README-zhCN.md">
+# Zotero Var Highlighter
+
+[![zotero target version](https://img.shields.io/badge/Zotero-7-green?style=flat-square&logo=zotero&logoColor=CC2936)](https://www.zotero.org)
+[![Using Zotero Var Highlighter](https://img.shields.io/badge/Using-Zotero%20Plugin%20Template-blue?style=flat-square&logo=github)](https://github.com/windingwind/zotero-plugin-template)
+
+这是 [Zotero](https://www.zotero.org/) 的插件模板。
+
+[English](../README.md) | [简体中文](./README-zhCN.md) | [Français](./README-frFR.md)
+
+- 开发指南
+  - [📖 插件开发文档](https://zotero-chinese.com/plugin-dev-guide/) (中文版，尚不完善)
+  - [📖 Zotero 7 插件开发文档](https://www.zotero.org/support/dev/zotero_7_for_developers)
+- 开发工具参考
+  - [🛠️ Zotero 插件工具包](https://github.com/windingwind/zotero-plugin-toolkit) | [API 文档](https://github.com/windingwind/zotero-plugin-toolkit/blob/master/docs/zotero-plugin-toolkit.md)
+  - [🛠️ Zotero 插件开发脚手架](https://github.com/northword/zotero-plugin-scaffold)
+  - [📜 Zotero 源代码](https://github.com/zotero/zotero)
+  - [ℹ️ Zotero 类型定义](https://github.com/windingwind/zotero-types)
+  - [📌 Zotero Var Highlighter](https://github.com/windingwind/zotero-plugin-template) (即本仓库)
+
+> [!tip]
+> 👁 Watch 本仓库，以及时收到修复或更新的通知。
+
+## 使用此模板构建的插件
+
+[![GitHub Repo stars](https://img.shields.io/github/stars/windingwind/zotero-better-notes?label=zotero-better-notes&style=flat-square)](https://github.com/windingwind/zotero-better-notes)
+[![GitHub Repo stars](https://img.shields.io/github/stars/windingwind/zotero-pdf-preview?label=zotero-pdf-preview&style=flat-square)](https://github.com/windingwind/zotero-pdf-preview)
+[![GitHub Repo stars](https://img.shields.io/github/stars/windingwind/zotero-pdf-translate?label=zotero-pdf-translate&style=flat-square)](https://github.com/windingwind/zotero-pdf-translate)
+[![GitHub Repo stars](https://img.shields.io/github/stars/windingwind/zotero-tag?label=zotero-tag&style=flat-square)](https://github.com/windingwind/zotero-tag)
+[![GitHub Repo stars](https://img.shields.io/github/stars/iShareStuff/ZoteroTheme?label=zotero-theme&style=flat-square)](https://github.com/iShareStuff/ZoteroTheme)
+[![GitHub Repo stars](https://img.shields.io/github/stars/MuiseDestiny/zotero-reference?label=zotero-reference&style=flat-square)](https://github.com/MuiseDestiny/zotero-reference)
+[![GitHub Repo stars](https://img.shields.io/github/stars/MuiseDestiny/zotero-citation?label=zotero-citation&style=flat-square)](https://github.com/MuiseDestiny/zotero-citation)
+[![GitHub Repo stars](https://img.shields.io/github/stars/MuiseDestiny/ZoteroStyle?label=zotero-style&style=flat-square)](https://github.com/MuiseDestiny/ZoteroStyle)
+[![GitHub Repo stars](https://img.shields.io/github/stars/volatile-static/Chartero?label=Chartero&style=flat-square)](https://github.com/volatile-static/Chartero)
+[![GitHub Repo stars](https://img.shields.io/github/stars/l0o0/tara?label=tara&style=flat-square)](https://github.com/l0o0/tara)
+[![GitHub Repo stars](https://img.shields.io/github/stars/redleafnew/delitemwithatt?label=delitemwithatt&style=flat-square)](https://github.com/redleafnew/delitemwithatt)
+[![GitHub Repo stars](https://img.shields.io/github/stars/redleafnew/zotero-updateifsE?label=zotero-updateifsE&style=flat-square)](https://github.com/redleafnew/zotero-updateifsE)
+[![GitHub Repo stars](https://img.shields.io/github/stars/northword/zotero-format-metadata?label=zotero-format-metadata&style=flat-square)](https://github.com/northword/zotero-format-metadata)
+[![GitHub Repo stars](https://img.shields.io/github/stars/inciteful-xyz/inciteful-zotero-plugin?label=inciteful-zotero-plugin&style=flat-square)](https://github.com/inciteful-xyz/inciteful-zotero-plugin)
+[![GitHub Repo stars](https://img.shields.io/github/stars/MuiseDestiny/zotero-gpt?label=zotero-gpt&style=flat-square)](https://github.com/MuiseDestiny/zotero-gpt)
+[![GitHub Repo stars](https://img.shields.io/github/stars/zoushucai/zotero-journalabbr?label=zotero-journalabbr&style=flat-square)](https://github.com/zoushucai/zotero-journalabbr)
+[![GitHub Repo stars](https://img.shields.io/github/stars/MuiseDestiny/zotero-figure?label=zotero-figure&style=flat-square)](https://github.com/MuiseDestiny/zotero-figure)
+[![GitHub Repo stars](https://img.shields.io/github/stars/l0o0/jasminum?label=jasminum&style=flat-square)](https://github.com/l0o0/jasminum)
+[![GitHub Repo stars](https://img.shields.io/github/stars/lifan0127/ai-research-assistant?label=ai-research-assistant&style=flat-square)](https://github.com/lifan0127/ai-research-assistant)
+[![GitHub Repo stars](https://img.shields.io/github/stars/daeh/zotero-markdb-connect?label=zotero-markdb-connect&style=flat-square)](https://github.com/daeh/zotero-markdb-connect)
+
+如果你正在使用此库，我建议你将这个标志 ([![Using Zotero Var Highlighter](https://img.shields.io/badge/Using-Zotero%20Plugin%20Template-blue?style=flat-square&logo=github)](https://github.com/windingwind/zotero-plugin-template)) 放在 README 文件中：
+
+```md
+[![Using Zotero Var Highlighter](https://img.shields.io/badge/Using-Zotero%20Plugin%20Template-blue?style=flat-square&logo=github)](https://github.com/windingwind/zotero-plugin-template)
+```
+
+## Features 特性
+
+- 事件驱动、函数式编程的可扩展框架；
+- 简单易用，开箱即用；
+- `src/modules/examples.ts` 中有丰富的示例，涵盖了插件中常用的大部分 API (使用 [zotero-plugin-toolkit](https://github.com/windingwind/zotero-plugin-toolkit)；
+- TypeScript 支持：
+  - 为使用 JavaScript 编写的 Zotero 源码提供全面的类型定义支持 (使用 [zotero-types](https://github.com/windingwind/zotero-types))；
+  - 全局变量和环境设置；
+- 插件开发/构建/发布工作流：
+  - ⭐自动热重载！每当修改源码时，都会自动编译并重新加载插件；
+  - 自动生成/更新插件版本、更新配置和设置环境变量 (`development`/`production`)；
+  - 自动发布到 GitHub ;
+- 集成 Prettier 和 ES Lint;
+
+## Examples 示例
+
+此库提供了 [zotero-plugin-toolkit](https://github.com/windingwind/zotero-plugin-toolkit) 中 API 的示例。
+
+在 `src/examples.ts` 中搜索`@example` 查看示例。这些示例在 `src/hooks.ts` 中调用演示。
+
+### 基本示例 (Basic Examples)
+
+- registerNotifier
+- registerPrefs, unregisterPrefs
+
+### 快捷键示例 (Shortcut Keys Examples)
+
+- registerShortcuts
+- exampleShortcutLargerCallback
+- exampleShortcutSmallerCallback
+- exampleShortcutConflictionCallback
+
+### UI 示例 (UI Examples)
+
+![image](https://user-images.githubusercontent.com/33902321/211739774-cc5c2df8-5fd9-42f0-9cdf-0f2e5946d427.png)
+
+- registerStyleSheet(the official make-it-red example)
+- registerRightClickMenuItem
+- registerRightClickMenuPopup
+- registerWindowMenuWithSeprator
+- registerExtraColumn
+- registerExtraColumnWithCustomCell
+- registerCustomItemBoxRow
+- registerLibraryTabPanel
+- registerReaderTabPanel
+
+### 首选项面板示例 (Preference Pane Examples)
+
+![image](https://user-images.githubusercontent.com/33902321/211737987-cd7c5c87-9177-4159-b975-dc67690d0490.png)
+
+- Preferences bindings
+- UI Events
+- Table
+- Locale
+
+详情参见 [`src/modules/preferenceScript.ts`](./src/modules/preferenceScript.ts)
+
+### 帮助示例 (HelperExamples)
+
+![image](https://user-images.githubusercontent.com/33902321/215119473-e7d0d0ef-6d96-437e-b989-4805ffcde6cf.png)
+
+- dialogExample
+- clipboardExample
+- filePickerExample
+- progressWindowExample
+- vtableExample(See Preference Pane Examples)
+
+### 指令行示例 (PromptExamples)
+
+Obsidian 风格的指令输入模块，它通过接受文本来运行插件，并在弹出窗口中显示可选项。
+
+使用 `Shift+P` 激活。
+
+![image](https://user-images.githubusercontent.com/33902321/215120009-e7c7ed27-33a0-44fe-b021-06c272481a92.png)
+
+- registerAlertPromptExample
+
+## 快速上手
+
+### 0 环境要求
+
+1. 安装 [beta 版 Zotero](https://www.zotero.org/support/beta_builds)
+2. 安装 [Node.js 最新 LTS 版本](https://nodejs.org/zh-cn/download) 和 [Git](https://git-scm.com/)
+
+> [!note]
+> 本指南假定你已经对 Zotero 插件的基本结构和工作原理有初步的了解。如果你还不了解，请先参考[官方文档](https://www.zotero.org/support/dev/zotero_7_for_developers) 和[官方插件样例 Make It Red](https://github.com/zotero/make-it-red)。
+
+### 1 创建你的仓库 (Create Your Repo)
+
+1. 点击 `Use this template`；
+2. 使用 `git clone` 克隆上一步生成的仓库；
+   <details >
+   <summary>💡 从 GitHub Codespace 开始</summary>
+
+   _GitHub CodeSpace_ 使你可以直接开始开发而无需在本地下载代码/IDE/依赖。
+
+   重复下列步骤，仅需三十秒即可开始构建你的第一个插件！
+   - 点击首页 `Use this template` 按钮，随后点击 `Open in codespace`，你需要登录你的 GitHub 账号。
+   - 等待 codespace 加载。
+
+   </details>
+
+3. 进入项目文件夹；
+
+### 2 配置模板和开发环境 (Config Template Settings and Enviroment)
+
+1. 修改 `./package.json` 中的设置，包括：
+
+   ```jsonc
+   {
+     "version": "", // 修改为 0.0.0
+     "description": "",
+     "config": {
+       "addonName": "", // 插件名称
+       "addonID": "", // 插件 ID【重要：防止冲突】
+       "addonRef": "", // 插件命名空间：元素前缀等
+       "addonInstance": "", // 注册在 Zotero 根下的实例名
+       "prefsPrefix": "extensions.zotero.${addonRef}", // 首选项的前缀
+     },
+     "repository": {
+       "type": "git",
+       "url": "git+https://github.com/your-github-name/repo-name.git",
+     },
+     "author": "Your Name",
+     "bugs": {
+       "url": "https://github.com/your-github-name/repo-name/issues",
+     },
+     "homepage": "https://github.com/your-github-name/repo-name#readme",
+   }
+   ```
+
+   > [!warning]
+   > 注意设置 addonID 和 addonRef 以避免冲突。
+
+   如果你需要在 GitHub 以外的地方托管你的 XPI 包，请修改 `zotero-plugin.config.ts` 中的 `updateURL` 和 `xpiDownloadLink`。
+
+2. 复制 Zotero 启动配置，填入 Zotero 可执行文件路径和 profile 路径。
+
+   > (可选项) 创建开发用 profile 目录：
+   >
+   > 此操作仅需执行一次：使用 `/path/to/zotero -p` 启动 Zotero，创建一个新的配置文件并用作开发配置文件。
+
+   ```sh
+   cp .env.example .env
+   vim .env
+   ```
+
+   如果你维护了多个插件，可以将这些内容存入系统环境变量，以避免在每个插件中都需要重复设置。
+
+3. 运行 `npm install` 以安装相关依赖
+
+   > 如果你使用 `pnpm` 作为包管理器，你需要添加 `public-hoist-pattern[]=*@types/bluebird*` 到`.npmrc`, 详情请查看 [zotero-types](https://github.com/windingwind/zotero-types?tab=readme-ov-file#usage) 的文档。
+
+   如果你使用 `npm install` 的过程中遇到了 `npm ERR! ERESOLVE unable to resolve dependency tree` ，这是由于上游依赖 typescript-eslint 导致的错误，请使用 `npm i -f` 命令进行安装。
+
+### 3 开发插件
+
+使用 `npm start` 启动开发服务器，它将：
+
+- 在开发模式下预构建插件
+- 启动 Zotero，并让其从 `build/` 中加载插件
+- 打开开发者工具（devtool）
+- 监听 `src/**` 和 `addon/**`，当文件发生修改时，重新构建插件并且重新加载
+
+#### 自动热重载
+
+厌倦了无休止的重启吗？忘掉它，拥抱热加载！
+
+1. 运行 `npm start`.
+2. 编码。(是的，就这么简单)
+
+当检测到 `src` 或 `addon` 中的文件修改时，插件将自动编译并重新加载。
+
+<details style="text-indent: 2em">
+<summary>💡 将此功能添加到现有插件的步骤</summary>
+
+请参阅：[zotero-plugin-scaffold](https://github.com/northword/zotero-plugin-scaffold)。
+
+</details>
+
+#### 调试代码
+
+你还可以：
+
+- 在 Tools->Developer->Run Javascript 中测试代码片段;
+
+- 使用 `Zotero.debug()` 调试输出。在 Help->Debug Output Logging->View Output 查看输出;
+
+- 调试 UI. Zotero 建立在 Firefox XUL 框架之上。使用 [XUL Explorer](https://udn.realityripple.com/docs/Archive/Mozilla/XUL_Explorer) 等软件调试 XUL UI.
+
+  > XUL 文档：<http://www.devdoc.net/web/developer.mozilla.org/en-US/docs/XUL.html>
+
+### 4 构建插件
+
+运行 `npm run build` 在生产模式下构建插件，构建的结果位于 `.scaffold/build/` 目录中。
+
+构建步骤文档可参阅 [zotero-plugin-scaffold](https://northword.github.io/zotero-plugin-scaffold/build.html)简单来说，可以分为以下几步：
+
+- 创建/清空 `build/`
+- 复制 `addon/**` 到 `.scaffold/build/addon/**`
+- 替换占位符：替换在 `package.json` 中定义的关键字和配置
+- 准备本地化文件以避免冲突，查看 [zotero_7_for_developers](https://www.zotero.org/support/dev/zotero_7_for_developers#avoiding_localization_conflicts) 了解更多
+  - 重命名`**/*.flt` 为 `**/${addonRef}-*.flt`
+  - 在每个消息前加上 `addonRef-`
+  - 为 FTL 消息生成类型声明文件
+- 准备首选项文件，在首选项键前添加前缀 `package.json#prefsPrefix`，并为首选项生成类型声明文件
+- 使用 ESBuild 来将 `.ts` 源码构建为 `.js`，从 `src/index.ts` 构建到`.scaffold/build/addon/content/scripts`
+- (仅在生产模式下工作) 压缩 `.scaffold/build/addon` 目录为 `.scaffold/build/*.xpi`
+- (仅在生产模式下工作) 准备 `update.json` 或 `update-beta.json`
+
+> [!note]
+>
+> **Dev & prod 两者有什么区别？**
+>
+> - 此环境变量存储在 `Zotero.${addonInstance}.data.env` 中，控制台输出在生产模式下被禁用。
+> - 你可以根据此变量决定用户无法查看/使用的内容。
+> - 在生产模式下，构建脚本将自动打包插件并更新 `update.json`.
+
+### 5 发布
+
+如果要构建和发布插件，运行如下指令：
+
+```shell
+# version increase, git add, commit and push
+# then on ci, npm run build, and release to GitHub
+npm run release
+```
+
+> [!note]
+> 在此模板中，发布流程被配置为在本地更新版本号、提交并推送标签，随后 GitHub Action 将重新构建插件并将 XPI 发布到 GitHub Release。
+
+#### 关于预发布
+
+该模板将 `prerelease` 定义为插件的测试版，当你在版本选择中选择 `prerelease` 版本 (版本号中带有 `-` )，构建脚本将创建一个 `update-beta.json` 给预发布版本使用，这将确保常规版本的用户不会自动更新到测试版，只有手动下载并安装了测试版的用户才能自动更新到下一个测试版。当下一个正式版本更新时，脚本将同步更新 `update.json` 和 `update-beta.json`，这将使正式版和测试版用户都可以更新到最新的正式版。
+
+> [!warning]
+> 严格来说，区分 Zotero 6 和 Zotero 7 兼容的插件版本应该通过 `update.json` 的 `addons.__addonID__.updates[]` 中分别配置 `applications.zotero.strict_min_version`，这样 Zotero 才能正确识别，详情请参阅 [Zotero 7 开发文档](https://www.zotero.org/support/dev/zotero_7_for_developers#updaterdf_updatesjson)。
+
+## Details 更多细节
+
+### 关于 Hooks(About Hooks)
+
+> 可以在 [`src/hooks.ts`](https://github.com/windingwind/zotero-plugin-template/blob/main/src/hooks.ts) 中查看更多。
+
+1. 当在 Zotero 中触发安装/启用/启动时，`bootstrap.js` > `startup` 被调用
+   - 等待 Zotero 就绪
+   - 加载 `index.js` (插件代码的主入口，从 `index.ts` 中构建)
+   - 如果是 Zotero 7 以上的版本则注册资源
+2. 主入口 `index.js` 中，插件对象被注入到 `Zotero` ，并且 `hooks.ts` > `onStartup` 被调用。
+   - 初始化插件需要的资源，包括通知监听器、首选项面板和 UI 元素。
+3. 当在 Zotero 中触发卸载/禁用时，`bootstrap.js` > `shutdown` 被调用。
+   - `events.ts` > `onShutdown` 被调用。移除 UI 元素、首选项面板或插件创建的任何内容。
+   - 移除脚本并释放资源。
+
+### 关于全局变量 (About Global Variables)
+
+> 可以在 [`src/index.ts`](https://github.com/windingwind/zotero-plugin-template/blob/main/src/index.ts)中查看更多
+
+bootstrap 插件在沙盒中运行，但沙盒中没有默认的全局变量，例如 `Zotero` 或 `window` 等我们曾在 overlay 插件环境中使用的变量。
+
+此模板将以下变量注册到全局范围：
+
+```plain
+Zotero, ZoteroPane, Zotero_Tabs, window, document, rootURI, ztoolkit, addon;
+```
+
+### 创建元素 API(Create Elements API)
+
+插件模板为 bootstrap 插件提供了一些新的 API. 我们有两个原因使用这些 API，而不是使用 `createElement/createElementNS`：
+
+- 在 bootstrap 模式下，插件必须在推出（禁用或卸载）时清理所有 UI 元素，这非常麻烦。使用 `createElement`，插件模板将维护这些元素。仅仅在退出时 `unregisterAll` .
+- Zotero 7 需要 createElement()/createElementNS() → createXULElement() 来表示其他的 XUL 元素，而 Zotero 6 并不支持 `createXULElement`. 类似于 React.createElement 的 API `createElement` 检测 namespace(xul/html/svg) 并且自动创建元素，返回元素为对应的 TypeScript 元素类型。
+
+```ts
+createElement(document, "div"); // returns HTMLDivElement
+createElement(document, "hbox"); // returns XUL.Box
+createElement(document, "button", { namespace: "xul" }); // manually set namespace. returns XUL.Button
+```
+
+### 关于 Zotero API(About Zotero API)
+
+Zotero 文档已过时且不完整，克隆 <https://github.com/zotero/zotero> 并全局搜索关键字。
+
+> ⭐[zotero-types](https://github.com/windingwind/zotero-types) 提供了最常用的 Zotero API，在默认情况下它被包含在此模板中。你的 IDE 将为大多数的 API 提供提醒。
+
+猜你需要：查找所需 API 的技巧
+
+在 `.xhtml`/`.flt` 文件中搜索 UI 标签，然后在 locale 文件中找到对应的键。，然后在 `.js`/`.jsx` 文件中搜索此键。
+
+### 目录结构 (Directory Structure)
+
+本部分展示了模板的目录结构。
+
+- 所有的 `.js/.ts` 代码都在 `./src`;
+- 插件配置文件：`./addon/manifest.json`;
+- UI 文件：`./addon/content/*.xhtml`.
+- 区域设置文件：`./addon/locale/**/*.flt`;
+- 首选项文件：`./addon/prefs.js`;
+
+```shell
+.
+|-- .github/                  # github conf
+|-- .vscode/                  # vscode conf
+|-- addon                     # static files
+|   |-- bootstrap.js
+|   |-- content
+|   |   |-- icons
+|   |   |   |-- favicon.png
+|   |   |   `-- favicon@0.5x.png
+|   |   |-- preferences.xhtml
+|   |   `-- zoteroPane.css
+|   |-- locale
+|   |   |-- en-US
+|   |   |   |-- addon.ftl
+|   |   |   |-- mainWindow.ftl
+|   |   |   `-- preferences.ftl
+|   |   `-- zh-CN
+|   |       |-- addon.ftl
+|   |       |-- mainWindow.ftl
+|   |       `-- preferences.ftl
+|   |-- manifest.json
+|   `-- prefs.js
+|-- build                         # build dir
+|-- node_modules
+|-- src                           # source code of scripts
+|   |-- addon.ts                  # base class
+|   |-- hooks.ts                  # lifecycle hooks
+|   |-- index.ts                  # main entry
+|   |-- modules                   # sub modules
+|   |   |-- examples.ts
+|   |   `-- preferenceScript.ts
+|   `-- utils                 # utilities
+|       |-- locale.ts
+|       |-- prefs.ts
+|       |-- wait.ts
+|       |-- window.ts
+|       `-- ztoolkit.ts
+|-- typings                   # ts typings
+|   `-- global.d.ts
+
+|-- .env                      # enviroment config (do not check into repo)
+|-- .env.example              # template of enviroment config, https://github.com/northword/zotero-plugin-scaffold
+|-- .gitignore                # git conf
+|-- .gitattributes            # git conf
+|-- .prettierrc               # prettier conf, https://prettier.io/
+|-- eslint.config.mjs         # eslint conf, https://eslint.org/
+|-- LICENSE
+|-- package-lock.json
+|-- package.json
+|-- tsconfig.json             # typescript conf, https://code.visualstudio.com/docs/languages/jsconfig
+|-- README.md
+`-- zotero-plugin.config.ts   # scaffold conf, https://github.com/northword/zotero-plugin-scaffold
+```
+
+## Disclaimer 免责声明
+
+在 AGPL 下使用此代码。不提供任何保证。遵守你所在地区的法律！
+
+如果你想更改许可，请通过 <wyzlshx@foxmail.com> 与我联系。
+</file>
+
+<file path="README.md">
+# Zotero Var Highlighter
+
+[![zotero target version](https://img.shields.io/badge/Zotero-7-green?style=flat-square&logo=zotero&logoColor=CC2936)](https://www.zotero.org)
+[![Using Zotero Var Highlighter](https://img.shields.io/badge/Using-Zotero%20Plugin%20Template-blue?style=flat-square&logo=github)](https://github.com/windingwind/zotero-plugin-template)
+
+This is a plugin template for [Zotero](https://www.zotero.org/).
+
+[English](README.md) | [简体中文](doc/README-zhCN.md) | [Français](doc/README-frFR.md)
+
+- Documentation for plugins development
+  - [📖 Plugin Development Documentation](https://zotero-chinese.com/plugin-dev-guide/) (Chinese, not yet complete)
+  - [📖 Plugin Development Documentation for Zotero 7](https://www.zotero.org/support/dev/zotero_7_for_developers)
+- Tools for plugins development
+  - [🛠️ Zotero Plugin Toolkit](https://github.com/windingwind/zotero-plugin-toolkit) | [API Documentation](https://github.com/windingwind/zotero-plugin-toolkit/blob/master/docs/zotero-plugin-toolkit.md)
+  - [🛠️ Zotero Plugin Scaffold](https://github.com/northword/zotero-plugin-scaffold)
+  - [ℹ️ Zotero Type Definitions](https://github.com/windingwind/zotero-types)
+  - [📜 Zotero Source Code](https://github.com/zotero/zotero)
+  - [📌 Zotero Var Highlighter](https://github.com/windingwind/zotero-plugin-template) (This repo)
+
+> [!tip]
+> 👁 Watch this repo so that you can be notified whenever there are fixes & updates.
+
+## Plugins built with this template
+
+[![GitHub Repo stars](https://img.shields.io/github/stars/windingwind/zotero-better-notes?label=zotero-better-notes&style=flat-square)](https://github.com/windingwind/zotero-better-notes)
+[![GitHub Repo stars](https://img.shields.io/github/stars/windingwind/zotero-pdf-preview?label=zotero-pdf-preview&style=flat-square)](https://github.com/windingwind/zotero-pdf-preview)
+[![GitHub Repo stars](https://img.shields.io/github/stars/windingwind/zotero-pdf-translate?label=zotero-pdf-translate&style=flat-square)](https://github.com/windingwind/zotero-pdf-translate)
+[![GitHub Repo stars](https://img.shields.io/github/stars/windingwind/zotero-tag?label=zotero-tag&style=flat-square)](https://github.com/windingwind/zotero-tag)
+[![GitHub Repo stars](https://img.shields.io/github/stars/iShareStuff/ZoteroTheme?label=zotero-theme&style=flat-square)](https://github.com/iShareStuff/ZoteroTheme)
+[![GitHub Repo stars](https://img.shields.io/github/stars/MuiseDestiny/zotero-reference?label=zotero-reference&style=flat-square)](https://github.com/MuiseDestiny/zotero-reference)
+[![GitHub Repo stars](https://img.shields.io/github/stars/MuiseDestiny/zotero-citation?label=zotero-citation&style=flat-square)](https://github.com/MuiseDestiny/zotero-citation)
+[![GitHub Repo stars](https://img.shields.io/github/stars/MuiseDestiny/ZoteroStyle?label=zotero-style&style=flat-square)](https://github.com/MuiseDestiny/ZoteroStyle)
+[![GitHub Repo stars](https://img.shields.io/github/stars/volatile-static/Chartero?label=Chartero&style=flat-square)](https://github.com/volatile-static/Chartero)
+[![GitHub Repo stars](https://img.shields.io/github/stars/l0o0/tara?label=tara&style=flat-square)](https://github.com/l0o0/tara)
+[![GitHub Repo stars](https://img.shields.io/github/stars/redleafnew/delitemwithatt?label=delitemwithatt&style=flat-square)](https://github.com/redleafnew/delitemwithatt)
+[![GitHub Repo stars](https://img.shields.io/github/stars/redleafnew/zotero-updateifsE?label=zotero-updateifsE&style=flat-square)](https://github.com/redleafnew/zotero-updateifsE)
+[![GitHub Repo stars](https://img.shields.io/github/stars/northword/zotero-format-metadata?label=zotero-format-metadata&style=flat-square)](https://github.com/northword/zotero-format-metadata)
+[![GitHub Repo stars](https://img.shields.io/github/stars/inciteful-xyz/inciteful-zotero-plugin?label=inciteful-zotero-plugin&style=flat-square)](https://github.com/inciteful-xyz/inciteful-zotero-plugin)
+[![GitHub Repo stars](https://img.shields.io/github/stars/MuiseDestiny/zotero-gpt?label=zotero-gpt&style=flat-square)](https://github.com/MuiseDestiny/zotero-gpt)
+[![GitHub Repo stars](https://img.shields.io/github/stars/zoushucai/zotero-journalabbr?label=zotero-journalabbr&style=flat-square)](https://github.com/zoushucai/zotero-journalabbr)
+[![GitHub Repo stars](https://img.shields.io/github/stars/MuiseDestiny/zotero-figure?label=zotero-figure&style=flat-square)](https://github.com/MuiseDestiny/zotero-figure)
+[![GitHub Repo stars](https://img.shields.io/github/stars/l0o0/jasminum?label=jasminum&style=flat-square)](https://github.com/l0o0/jasminum)
+[![GitHub Repo stars](https://img.shields.io/github/stars/lifan0127/ai-research-assistant?label=ai-research-assistant&style=flat-square)](https://github.com/lifan0127/ai-research-assistant)
+[![GitHub Repo stars](https://img.shields.io/github/stars/daeh/zotero-markdb-connect?label=zotero-markdb-connect&style=flat-square)](https://github.com/daeh/zotero-markdb-connect)
+[![GitHub Repo stars](https://img.shields.io/github/stars/daeh/zotero-citation-tally?label=citation-tally&style=flat-square)](https://github.com/daeh/zotero-citation-tally)
+
+If you are using this repo, I recommended that you put the following badge on your README:
+
+[![Using Zotero Var Highlighter](https://img.shields.io/badge/Using-Zotero%20Plugin%20Template-blue?style=flat-square&logo=github)](https://github.com/windingwind/zotero-plugin-template)
+
+```md
+[![Using Zotero Var Highlighter](https://img.shields.io/badge/Using-Zotero%20Plugin%20Template-blue?style=flat-square&logo=github)](https://github.com/windingwind/zotero-plugin-template)
+```
+
+## Features
+
+- Event-driven, functional programming, under extensive skeleton;
+- Simple and user-friendly, works out-of-the-box.
+- Abundant examples in `src/modules/examples.ts`, covering most of the commonly used APIs in plugins (using [zotero-plugin-toolkit](https://github.com/windingwind/zotero-plugin-toolkit));
+- TypeScript support:
+  - Full type definition support for the whole Zotero project, which is written in JavaScript (using [zotero-types](https://github.com/windingwind/zotero-types));
+  - Global variables and environment setup;
+- Plugin develop/build/release workflow:
+  - ⭐ [New!] Auto hot reload! Whenever the source code is modified, automatically compile and reload. [See here→](#auto-hot-reload)
+  - Automatically generate/update plugin id/version, update configrations, and set environment variables (`development` / `production`);
+  - Automatically release to GitHub;
+- Prettier and ES Lint integration.
+
+## Examples
+
+This repo provides examples for [zotero-plugin-toolkit](https://github.com/windingwind/zotero-plugin-toolkit) APIs.
+
+Search `@example` in `src/examples.ts`. The examples are called in `src/hooks.ts`.
+
+### Basic Examples
+
+- registerNotifier
+- registerPrefs, unregisterPrefs
+
+### Shortcut Keys Examples
+
+- registerShortcuts
+- exampleShortcutLargerCallback
+- exampleShortcutSmallerCallback
+- exampleShortcutConflictionCallback
+
+### UI Examples
+
+![image](https://user-images.githubusercontent.com/33902321/211739774-cc5c2df8-5fd9-42f0-9cdf-0f2e5946d427.png)
+
+- registerStyleSheet(the official make-it-red example)
+- registerRightClickMenuItem
+- registerRightClickMenuPopup
+- registerWindowMenuWithSeprator
+- registerExtraColumn
+- registerExtraColumnWithCustomCell
+- registerCustomItemBoxRow
+- registerLibraryTabPanel
+- registerReaderTabPanel
+
+### Preference Pane Examples
+
+![image](https://user-images.githubusercontent.com/33902321/211737987-cd7c5c87-9177-4159-b975-dc67690d0490.png)
+
+- Preferences bindings
+- UI Events
+- Table
+- Locale
+
+See [`src/modules/preferenceScript.ts`](./src/modules/preferenceScript.ts)
+
+### HelperExamples
+
+![image](https://user-images.githubusercontent.com/33902321/215119473-e7d0d0ef-6d96-437e-b989-4805ffcde6cf.png)
+
+- dialogExample
+- clipboardExample
+- filePickerExample
+- progressWindowExample
+- vtableExample(See Preference Pane Examples)
+
+### PromptExamples
+
+An Obsidian-style prompt(popup command input) module. It accepts text command to run callback, with optional display in the popup.
+
+Activate with `Shift+P`.
+
+![image](https://user-images.githubusercontent.com/33902321/215120009-e7c7ed27-33a0-44fe-b021-06c272481a92.png)
+
+- registerAlertPromptExample
+
+## Quick Start Guide
+
+### 0 Requirement
+
+1. Install a beta version of Zotero: <https://www.zotero.org/support/beta_builds>
+2. Install [Node.js latest LTS version](https://nodejs.org/en/) and [Git](https://git-scm.com/)
+
+> [!note]
+> This guide assumes that you have an initial understanding of the basic structure and workings of the Zotero plugin. If you don't, please refer to the [documentation](https://www.zotero.org/support/dev/zotero_7_for_developers) and official plugin examples [Make It Red](https://github.com/zotero/make-it-red) first.
+
+### 1 Creat Your Repo
+
+1. Click `Use this template`
+2. Git clone your new repo
+   <details >
+   <summary>💡 Start with GitHub Codespace</summary>
+
+   _GitHub CodeSpace_ enables you getting started without the need to download code/IDE/dependencies locally.
+
+   Replace the steps above and build you first plugin in 30 seconds!
+   - Goto top of the [homepage](https://github.com/windingwind/zotero-plugin-template), click the green button `Use this template`, click `Open in codespace`. You may need to login to your GitHub account.
+   - Wait for codespace to load.
+
+   </details>
+
+3. Enter the repo folder
+
+### 2 Config Template Settings and Environment
+
+1. Modify the settings in `./package.json`, including:
+
+   ```jsonc
+   {
+     "version": "0.0.0",
+     "description": "",
+     "config": {
+       "addonName": "", // name to be displayed in the plugin manager
+       "addonID": "", // ID to avoid conflict. IMPORTANT!
+       "addonRef": "", // e.g. Element ID prefix
+       "addonInstance": "", // the plugin's root instance: Zotero.${addonInstance}
+       "prefsPrefix": "extensions.zotero.${addonRef}", // the prefix of prefs
+     },
+     "repository": {
+       "type": "git",
+       "url": "git+https://github.com/your-github-name/repo-name.git",
+     },
+     "author": "Your Name",
+     "bugs": {
+       "url": "https://github.com/your-github-name/repo-name/issues",
+     },
+     "homepage": "https://github.com/your-github-name/repo-name#readme",
+   }
+   ```
+
+   > [!warning]
+   > Be careful to set the addonID and addonRef to avoid conflict.
+
+   If you need to host your XPI packages outside of GitHub, modify `updateURL` and add `xpiDownloadLink` in `zotero-plugin.config.ts`.
+
+2. Copy the environment variable file. Modify the commands that starts your installation of the beta Zotero.
+
+   > Create a development profile (Optional)  
+   > Start the beta Zotero with `/path/to/zotero -p`. Create a new profile and use it as your development profile. Do this only once
+
+   ```sh
+   cp .env.example .env
+   vim .env
+   ```
+
+   If you are developing more than one plugin, you can store the bin path and profile path in the system environment variables, which can be omitted here.
+
+3. Install dependencies with `npm install`
+
+   > If you are using `pnpm` as the package manager for your project, you need to add `public-hoist-pattern[]=*@types/bluebird*` to `.npmrc`, see <https://github.com/windingwind/zotero-types?tab=readme-ov-file#usage>.
+
+   If you get `npm ERR! ERESOLVE unable to resolve dependency tree` with `npm install`, which is an upstream dependency bug of typescript-eslint, use the `npm i -f` command to install it.
+
+### 3 Coding
+
+Start development server with `npm start`, it will:
+
+- Prebuild the plugin in development mode
+- Start Zotero with plugin loaded from `build/`
+- Watch `src/**` and `addon/**`, rebuild and reload plugin in Zotero when source code changed.
+
+#### Auto Hot Reload
+
+Tired of endless restarting? Forget about it!
+
+1. Run `npm start`.
+2. Coding. (Yes, that's all)
+
+When file changes are detected in `src` or `addon`, the plugin will be automatically compiled and reloaded.
+
+<details style="text-indent: 2em">
+<summary>💡 Steps to add this feature to an existing plugin</summary>
+
+Please see [zotero-plugin-scaffold](https://github.com/northword/zotero-plugin-scaffold).
+
+</details>
+
+#### Debug in Zotero
+
+You can also:
+
+- Test code snippets in Tools -> Developer -> Run Javascript;
+- Debug output with `Zotero.debug()`. Find the outputs in Help->Debug Output Logging->View Output;
+- Debug UI. Zotero is built on the Firefox XUL framework. Debug XUL UI with software like [XUL Explorer](https://udn.realityripple.com/docs/Archive/Mozilla/XUL_Explorer).
+  > XUL Documentation: <http://www.devdoc.net/web/developer.mozilla.org/en-US/docs/XUL.html>
+
+### 4 Build
+
+Run `npm run build` to build the plugin in production mode. The build output will be located in the `.scaffold/build/` directory.
+
+For detailed build steps, refer to the [zotero-plugin-scaffold documentation](https://northword.github.io/zotero-plugin-scaffold/build.html). In short, the process can be divided into the following steps:
+
+- Create or clear the `build/` directory
+- Copy `addon/**` to `.scaffold/build/addon/**`
+- Replace placeholders: substitute keywords and configurations defined in `package.json`
+- Prepare localization files to avoid conflicts (see the [zotero_7_for_developers](https://www.zotero.org/support/dev/zotero_7_for_developers#avoiding_localization_conflicts) for more information):
+  - Rename `**/*.flt` to `**/${addonRef}-*.flt`
+  - Prefix each message with `addonRef-`
+  - Generate type declaration files for FTL messages
+- Prepare preferences files: prefix preference keys with `package.json#prefsPrefix` and generate type declaration files for preferences
+- Use ESBuild to compile `.ts` source code to `.js`, building from `src/index.ts` to `.scaffold/build/addon/content/scripts`
+- _(Production mode only)_ Compress the `.scaffold/build/addon` directory into `.scaffold/build/*.xpi`
+- _(Production mode only)_ Prepare `update.json` or `update-beta.json`
+
+> [!note]
+>
+> **What's the difference between dev & prod?**
+>
+> - This environment variable is stored in `Zotero.${addonInstance}.data.env`. The outputs to console is disabled in prod mode.
+> - You can decide what users cannot see/use based on this variable.
+> - In production mode, the build script will pack the plugin and update the `update.json`.
+
+### 5 Release
+
+To build and release, use
+
+```shell
+# version increase, git add, commit and push
+# then on ci, npm run build, and release to GitHub
+npm run release
+```
+
+> [!note]
+> This will use [Bumpp](https://github.com/antfu-collective/bumpp) to prompt for the new version number, locally bump the version, run any (pre/post)version scripts defined in `package.json`, commit, build (optional), tag the commit with the version number and push commits and git tags. Bumpp can be configured in `zotero-plugin-config.ts`; for example, add `release: { bumpp: { execute: "npm run build" } }` to also build before committing.
+>
+> Subsequently GitHub Action will rebuild the plugin and use `zotero-plugin-scaffold`'s `release` script to publish the XPI to GitHub Release. In addition, a separate release (tag: `release`) will be created or updated that includes update manifests `update.json` and `update-beta.json` as assets. These will be available at `https://github.com/{{owner}}/{{repo}}/releases/download/release/update*.json`.
+
+#### About Prerelease
+
+The template defines `prerelease` as the beta version of the plugin, when you select a `prerelease` version in Bumpp (with `-` in the version number). The build script will create a new `update-beta.json` for prerelease use, which ensures that users of the regular version won't be able to update to the beta. Only users who have manually downloaded and installed the beta will be able to update to the next beta automatically.
+
+When the next regular release is updated, both `update.json` and `update-beta.json` will be updated (on the special `release` release, see above) so that both regular and beta users can update to the new regular release.
+
+> [!warning]
+> Strictly, distinguishing between Zotero 6 and Zotero 7 compatible plugin versions should be done by configuring `applications.zotero.strict_min_version` in `addons.__addonID__.updates[]` of `update.json` respectively, so that Zotero recognizes it properly, see <https://www.zotero.org/support/dev/zotero_7_for_developers#updaterdf_updatesjson>.
+
+## Details
+
+### About Hooks
+
+> See also [`src/hooks.ts`](https://github.com/windingwind/zotero-plugin-template/blob/main/src/hooks.ts)
+
+1. When install/enable/startup triggered from Zotero, `bootstrap.js` > `startup` is called
+   - Wait for Zotero ready
+   - Load `index.js` (the main entrance of plugin code, built from `index.ts`)
+   - Register resources if Zotero 7+
+2. In the main entrance `index.js`, the plugin object is injected under `Zotero` and `hooks.ts` > `onStartup` is called.
+   - Initialize anything you want, including notify listeners, preference panes, and UI elements.
+3. When uninstall/disabled triggered from Zotero, `bootstrap.js` > `shutdown` is called.
+   - `events.ts` > `onShutdown` is called. Remove UI elements, preference panes, or anything created by the plugin.
+   - Remove scripts and release resources.
+
+### About Global Variables
+
+> See also [`src/index.ts`](https://github.com/windingwind/zotero-plugin-template/blob/main/src/index.ts)
+
+The bootstrapped plugin runs in a sandbox, which does not have default global variables like `Zotero` or `window`, which we used to have in the overlay plugins' window environment.
+
+This template registers the following variables to the global scope:
+
+```plain
+Zotero, ZoteroPane, Zotero_Tabs, window, document, rootURI, ztoolkit, addon;
+```
+
+### Create Elements API
+
+The plugin template provides new APIs for bootstrap plugins. We have two reasons to use these APIs, instead of the `createElement/createElementNS`:
+
+- In bootstrap mode, plugins have to clean up all UI elements on exit (disable or uninstall), which is very annoying. Using the `createElement`, the plugin template will maintain these elements. Just `unregisterAll` at the exit.
+- Zotero 7 requires createElement()/createElementNS() → createXULElement() for remaining XUL elements, while Zotero 6 doesn't support `createXULElement`. The React.createElement-like API `createElement` detects namespace(xul/html/svg) and creates elements automatically, with the return element in the corresponding TS element type.
+
+```ts
+createElement(document, "div"); // returns HTMLDivElement
+createElement(document, "hbox"); // returns XUL.Box
+createElement(document, "button", { namespace: "xul" }); // manually set namespace. returns XUL.Button
+```
+
+### About Zotero API
+
+Zotero docs are outdated and incomplete. Clone <https://github.com/zotero/zotero> and search the keyword globally.
+
+> ⭐The [zotero-types](https://github.com/windingwind/zotero-types) provides most frequently used Zotero APIs. It's included in this template by default. Your IDE would provide hint for most of the APIs.
+
+A trick for finding the API you want:
+
+Search the UI label in `.xhtml`/`.flt` files, find the corresponding key in locale file. Then search this keys in `.js`/`.jsx` files.
+
+### Directory Structure
+
+This section shows the directory structure of a template.
+
+- All `.js/.ts` code files are in `./src`;
+- Addon config files: `./addon/manifest.json`;
+- UI files: `./addon/content/*.xhtml`.
+- Locale files: `./addon/locale/**/*.flt`;
+- Preferences file: `./addon/prefs.js`;
+
+```shell
+.
+|-- .github/                  # github conf
+|-- .vscode/                  # vscode conf
+|-- addon                     # static files
+|   |-- bootstrap.js
+|   |-- content
+|   |   |-- icons
+|   |   |   |-- favicon.png
+|   |   |   `-- favicon@0.5x.png
+|   |   |-- preferences.xhtml
+|   |   `-- zoteroPane.css
+|   |-- locale
+|   |   |-- en-US
+|   |   |   |-- addon.ftl
+|   |   |   |-- mainWindow.ftl
+|   |   |   `-- preferences.ftl
+|   |   `-- zh-CN
+|   |       |-- addon.ftl
+|   |       |-- mainWindow.ftl
+|   |       `-- preferences.ftl
+|   |-- manifest.json
+|   `-- prefs.js
+|-- build                         # build dir
+|-- node_modules
+|-- src                           # source code of scripts
+|   |-- addon.ts                  # base class
+|   |-- hooks.ts                  # lifecycle hooks
+|   |-- index.ts                  # main entry
+|   |-- modules                   # sub modules
+|   |   |-- examples.ts
+|   |   `-- preferenceScript.ts
+|   `-- utils                 # utilities
+|       |-- locale.ts
+|       |-- prefs.ts
+|       |-- wait.ts
+|       |-- window.ts
+|       `-- ztoolkit.ts
+|-- typings                   # ts typings
+|   `-- global.d.ts
+
+|-- .env                      # enviroment config (do not check into repo)
+|-- .env.example              # template of enviroment config, https://github.com/northword/zotero-plugin-scaffold
+|-- .gitignore                # git conf
+|-- .gitattributes            # git conf
+|-- .prettierrc               # prettier conf, https://prettier.io/
+|-- eslint.config.mjs         # eslint conf, https://eslint.org/
+|-- LICENSE
+|-- package-lock.json
+|-- package.json
+|-- tsconfig.json             # typescript conf, https://code.visualstudio.com/docs/languages/jsconfig
+|-- README.md
+`-- zotero-plugin.config.ts   # scaffold conf, https://github.com/northword/zotero-plugin-scaffold
+```
+
+## Disclaimer
+
+Use this code under AGPL. No warranties are provided. Keep the laws of your locality in mind!
+
+If you want to change the license, please contact me at <wyzlshx@foxmail.com>
+</file>
+
+<file path="src/hooks.ts">
+import { Highlighter } from "./modules/highlighter";
+import { config } from "../package.json";
+
+async function onStartup() {
+  Zotero.debug(`[${config.addonName}] onStartup: Begin`);
+
+  await Promise.all([
+    Zotero.initializationPromise,
+    Zotero.unlockPromise,
+    Zotero.uiReadyPromise,
+  ]);
+
+  Zotero.debug(
+    `[${config.addonName}] onStartup: Zotero ready promises resolved`,
+  );
+
+  try {
+    // @ts-expect-error
+    Highlighter.activate(Zotero[config.addonInstance]);
+    Zotero.debug(`[${config.addonName}] Highlighter activated`);
+  } catch (e) {
+    Zotero.debug(`[${config.addonName}] ERROR activating Highlighter: ${e}`);
+  }
+
+  const mainWindow = Zotero.getMainWindow();
+  Zotero.debug(
+    `[${config.addonName}] onStartup: getMainWindow() result: ${mainWindow ? "Found" : "Null"}`,
+  );
+
+  if (mainWindow) {
+    Zotero.debug(
+      `[${config.addonName}] onStartup: Manually triggering onMainWindowLoad`,
+    );
+    await onMainWindowLoad(mainWindow);
+  } else {
+    Zotero.debug(
+      `[${config.addonName}] onStartup: No main window found, waiting for event`,
+    );
+  }
+}
+
+async function onMainWindowLoad(win: _ZoteroTypes.MainWindow): Promise<void> {
+  Zotero.debug(`[${config.addonName}] onMainWindowLoad: Called`);
+
+  try {
+    // @ts-expect-error
+    Zotero[config.addonInstance].addToWindow(win);
+    Zotero.debug(
+      `[${config.addonName}] onMainWindowLoad: addToWindow executed`,
+    );
+  } catch (e) {
+    Zotero.debug(`[${config.addonName}] ERROR in onMainWindowLoad: ${e}`);
+  }
+}
+
+async function onMainWindowUnload(win: Window): Promise<void> {}
+
+function onShutdown(): void {}
+
+async function onNotify(
+  event: string,
+  type: string,
+  ids: Array<string | number>,
+  extraData: { [key: string]: any },
+) {}
+
+async function onPrefsEvent(type: string, data: { [key: string]: any }) {}
+
+function onShortcuts(type: string) {}
+
+function onDialogEvents(type: string) {}
+
+// Add your hooks here. For element click, etc.
+// Keep in mind hooks only do dispatch. Don't add code that does real jobs in hooks.
+// Otherwise the code would be hard to read and maintain.
+
+export default {
+  onStartup,
+  onShutdown,
+  onMainWindowLoad,
+  onMainWindowUnload,
+  onNotify,
+  onPrefsEvent,
+  onShortcuts,
+  onDialogEvents,
+};
+</file>
+
+<file path="src/modules/examples.ts">
+
+</file>
+
+<file path="package.json">
+{
+  "name": "zotero-var-highlighter",
+  "type": "module",
+  "version": "0.0.1-debug",
+  "description": "A Zotero plugin to highlight variables and trace their definitions in PDF reader.",
+  "config": {
+    "addonName": "Zotero Var Highlighter",
+    "addonID": "zotero-var-highlighter@zotero-var-highlighter",
+    "addonRef": "zotero-var-highlighter",
+    "addonInstance": "ZoteroVarHighlighter",
+    "prefsPrefix": "extensions.zotero.zotero-var-highlighter"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/windingwind/zotero-plugin-template.git"
+  },
+  "author": "Ruilin Li",
+  "bugs": {
+    "url": "https://github.com/windingwind/zotero-plugin-template/issues"
+  },
+  "homepage": "https://github.com/windingwind/zotero-plugin-template#readme",
+  "license": "AGPL-3.0-or-later",
+  "scripts": {
+    "start": "zotero-plugin serve",
+    "build": "zotero-plugin build && tsc --noEmit",
+    "lint:check": "prettier --check . && eslint .",
+    "lint:fix": "prettier --write . && eslint . --fix",
+    "release": "zotero-plugin release",
+    "test": "zotero-plugin test",
+    "update-deps": "npm update --save"
+  },
+  "dependencies": {
+    "zotero-plugin-toolkit": "^5.1.0-beta.13"
+  },
+  "devDependencies": {
+    "@types/chai": "^5.2.3",
+    "@types/mocha": "^10.0.10",
+    "@types/node": "^24.10.0",
+    "@zotero-plugin/eslint-config": "^0.6.7",
+    "chai": "^6.2.1",
+    "eslint": "^9.39.2",
+    "mocha": "^11.7.5",
+    "prettier": "^3.7.4",
+    "typescript": "^5.9.3",
+    "zotero-plugin-scaffold": "^0.8.2",
+    "zotero-types": "^4.1.0-beta.4"
+  },
+  "prettier": {
+    "printWidth": 80,
+    "tabWidth": 2,
+    "endOfLine": "lf",
+    "overrides": [
+      {
+        "files": [
+          "*.xhtml"
+        ],
+        "options": {
+          "htmlWhitespaceSensitivity": "css"
+        }
+      }
+    ]
+  }
+}
+</file>
+
+</files>
