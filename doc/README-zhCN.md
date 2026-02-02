@@ -8,7 +8,7 @@
 ## 简介
 
 **Zotero Var Highlighter** 是一款旨在辅助研究人员阅读复杂论文的插件，特别是那些包含大量数学变量的论文。它可以在整篇论文中高亮所选字符。
-
+[下载最新安装包XPI](https://github.com/taotaozsky2025-beep/zotero-var-highlighter/releases/latest/download/zotero-var-highlighter.xpi)
 ## 核心功能
 
 ### 自动高亮
