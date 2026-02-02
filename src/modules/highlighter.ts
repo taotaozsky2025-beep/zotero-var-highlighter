@@ -18,7 +18,7 @@ export class Highlighter {
   private static readonly TAG = "ZVH-highlighter-2026-01-29-r6";
 
   // Debug
-  private static readonly DEBUG_POPUP = true;
+  private static readonly DEBUG_POPUP = false;
   private static readonly VERBOSE_ON_EARLY_RETURN = true;
 
   // 调试期建议 0；稳定后可改成 150~300
@@ -27,7 +27,7 @@ export class Highlighter {
   // 行为参数
   private static readonly CASE_SENSITIVE = true; // 你前面已验证需要严格区分
   private static readonly PREVENT_SCROLL = true; // 彻底阻止自动滚动
-  private static readonly SCROLL_LOCK_MS = 1200;  // 锁滚动窗口（ms）
+  private static readonly SCROLL_LOCK_MS = 1200; // 锁滚动窗口（ms）
   private static readonly AFTER_FIND_FORCE_FIRST_DELAY_MS = 200; // 等匹配完成后再强制首匹配（ms）
 
   private static debugSeq = 0;
@@ -89,16 +89,22 @@ export class Highlighter {
 
   public static deactivate() {
     this.popup("deactivate()", `tag=${this.TAG}`);
-    Zotero.Reader.unregisterEventListener("renderTextSelectionPopup", this.handler);
+    Zotero.Reader.unregisterEventListener(
+      "renderTextSelectionPopup",
+      this.handler,
+    );
     this.popup("unregisterEventListener OK");
   }
 
-  private static async onRenderTextSelectionPopup(evt: RenderTextSelectionPopupEvent) {
+  private static async onRenderTextSelectionPopup(
+    evt: RenderTextSelectionPopupEvent,
+  ) {
     this.popup("renderTextSelectionPopup FIRED", `tag=${this.TAG}`);
 
     const reader = evt?.reader;
     if (!reader) {
-      if (this.VERBOSE_ON_EARLY_RETURN) this.popup("return", "evt.reader is null");
+      if (this.VERBOSE_ON_EARLY_RETURN)
+        this.popup("return", "evt.reader is null");
       return;
     }
 
@@ -107,9 +113,9 @@ export class Highlighter {
     try {
       selected = String(
         evt?.params?.text ??
-        evt?.params?.annotation?.text ??
-        evt?.params?.annotationText ??
-        "",
+          evt?.params?.annotation?.text ??
+          evt?.params?.annotationText ??
+          "",
       ).trim();
     } catch {}
 
@@ -121,11 +127,15 @@ export class Highlighter {
         const sel = w0?.getSelection?.();
         selected = String(sel?.toString?.() || "").trim();
       } catch {}
-      this.popup("fallback selection", selected ? `\`${selected}\`` : "(empty)");
+      this.popup(
+        "fallback selection",
+        selected ? `\`${selected}\`` : "(empty)",
+      );
     }
 
     if (!selected) {
-      if (this.VERBOSE_ON_EARLY_RETURN) this.popup("return", "selectedText empty", 2200);
+      if (this.VERBOSE_ON_EARLY_RETURN)
+        this.popup("return", "selectedText empty", 2200);
       return;
     }
 
@@ -133,7 +143,8 @@ export class Highlighter {
     this.popup("selectedText", `\`${selected}\` len=${selected.length}`);
 
     if (selected.length > 100) {
-      if (this.VERBOSE_ON_EARLY_RETURN) this.popup("return", "selection too long (>100)", 2200);
+      if (this.VERBOSE_ON_EARLY_RETURN)
+        this.popup("return", "selection too long (>100)", 2200);
       return;
     }
 
@@ -146,7 +157,11 @@ export class Highlighter {
     );
     if (!app || !w) {
       if (this.VERBOSE_ON_EARLY_RETURN) {
-        this.popup("return", "PDFViewerApplication not found (not a PDF.js viewer?)", 3000);
+        this.popup(
+          "return",
+          "PDFViewerApplication not found (not a PDF.js viewer?)",
+          3000,
+        );
       }
       return;
     }
@@ -155,14 +170,20 @@ export class Highlighter {
     const snap = this.captureScroll(app);
     this.popup(
       "captureScroll()",
-      snap ? `top=${snap.scrollTop} left=${snap.scrollLeft} page=${snap.pageNumber ?? "?"}` : "FAILED",
+      snap
+        ? `top=${snap.scrollTop} left=${snap.scrollLeft} page=${snap.pageNumber ?? "?"}`
+        : "FAILED",
       1800,
     );
 
     let unlock: (() => void) | null = null;
     if (this.PREVENT_SCROLL && snap) {
       unlock = this.lockScroll(app, snap, this.SCROLL_LOCK_MS);
-      this.popup("lockScroll()", unlock ? `OK ${this.SCROLL_LOCK_MS}ms` : "FAILED", 1800);
+      this.popup(
+        "lockScroll()",
+        unlock ? `OK ${this.SCROLL_LOCK_MS}ms` : "FAILED",
+        1800,
+      );
     }
 
     // 4) 清理旧高亮
@@ -179,7 +200,9 @@ export class Highlighter {
     });
     this.popup(
       "dispatch find",
-      dispatched ? `OK highlightAll=true caseSensitive=${this.CASE_SENSITIVE}` : "FAILED",
+      dispatched
+        ? `OK highlightAll=true caseSensitive=${this.CASE_SENSITIVE}`
+        : "FAILED",
       dispatched ? 2000 : 4500,
     );
 
@@ -187,7 +210,11 @@ export class Highlighter {
     //    注意：这一步依赖 PDF.js 内部状态，属于 best-effort
     await this.delay(this.AFTER_FIND_FORCE_FIRST_DELAY_MS);
     const forced = this.forceGlobalFirstAsCurrentMatch(app);
-    this.popup("forceGlobalFirstAsCurrentMatch()", forced ? "OK (best-effort)" : "SKIP/FAILED", 2200);
+    this.popup(
+      "forceGlobalFirstAsCurrentMatch()",
+      forced ? "OK (best-effort)" : "SKIP/FAILED",
+      2200,
+    );
 
     // 7) 解除滚动锁（若设置了）
     if (unlock) {
@@ -201,7 +228,10 @@ export class Highlighter {
     this.popup("peek find state", state, 2600);
   }
 
-  private static getPdfJsApp(reader: Reader): { app: any | null; w: any | null } {
+  private static getPdfJsApp(reader: Reader): {
+    app: any | null;
+    w: any | null;
+  } {
     try {
       const iframeWin = reader?._iframeWindow;
       if (!iframeWin) return { app: null, w: null };
@@ -214,7 +244,12 @@ export class Highlighter {
     }
   }
 
-  private static dispatchEventBus(app: any, w: any, name: string, payload: any): boolean {
+  private static dispatchEventBus(
+    app: any,
+    w: any,
+    name: string,
+    payload: any,
+  ): boolean {
     try {
       const eb = app?.eventBus;
       if (!eb || typeof eb.dispatch !== "function") return false;
@@ -230,7 +265,10 @@ export class Highlighter {
 
   private static clearPdfJsFind(app: any, w: any): boolean {
     try {
-      if (app.findController && typeof app.findController.reset === "function") {
+      if (
+        app.findController &&
+        typeof app.findController.reset === "function"
+      ) {
         app.findController.reset();
         return true;
       }
@@ -276,7 +314,11 @@ export class Highlighter {
    * 短时间锁住滚动，阻止 PDF.js 在 find 后把 current match 滚动入视野。
    * PDF.js 的滚动通常来自 findController 的 scrollMatchIntoView / viewer 的 scrollPageIntoView 等路径。:contentReference[oaicite:1]{index=1}
    */
-  private static lockScroll(app: any, snap: ScrollSnapshot, durationMs: number): (() => void) | null {
+  private static lockScroll(
+    app: any,
+    snap: ScrollSnapshot,
+    durationMs: number,
+  ): (() => void) | null {
     try {
       const container =
         app?.pdfViewer?.container ??
@@ -292,18 +334,27 @@ export class Highlighter {
       const origScrollPageIntoView = app?.pdfViewer?.scrollPageIntoView;
 
       if (fc && typeof fc.scrollMatchIntoView === "function") {
-        fc.scrollMatchIntoView = function () { /* no-op */ };
+        fc.scrollMatchIntoView = function () {
+          /* no-op */
+        };
       }
-      if (app?.pdfViewer && typeof app.pdfViewer.scrollPageIntoView === "function") {
-        app.pdfViewer.scrollPageIntoView = function () { /* no-op */ };
+      if (
+        app?.pdfViewer &&
+        typeof app.pdfViewer.scrollPageIntoView === "function"
+      ) {
+        app.pdfViewer.scrollPageIntoView = function () {
+          /* no-op */
+        };
       }
 
       // 2) 监听 scroll 并回滚（双保险）
       let active = true;
       const onScroll = () => {
         if (!active) return;
-        if (container.scrollTop !== snap.scrollTop) container.scrollTop = snap.scrollTop;
-        if (container.scrollLeft !== snap.scrollLeft) container.scrollLeft = snap.scrollLeft;
+        if (container.scrollTop !== snap.scrollTop)
+          container.scrollTop = snap.scrollTop;
+        if (container.scrollLeft !== snap.scrollLeft)
+          container.scrollLeft = snap.scrollLeft;
       };
       container.addEventListener("scroll", onScroll, { passive: true });
 
@@ -311,7 +362,9 @@ export class Highlighter {
       const unlock = () => {
         if (!active) return;
         active = false;
-        try { container.removeEventListener("scroll", onScroll); } catch {}
+        try {
+          container.removeEventListener("scroll", onScroll);
+        } catch {}
 
         try {
           if (fc && origScrollMatch && typeof origScrollMatch === "function") {
@@ -320,7 +373,11 @@ export class Highlighter {
         } catch {}
 
         try {
-          if (app?.pdfViewer && origScrollPageIntoView && typeof origScrollPageIntoView === "function") {
+          if (
+            app?.pdfViewer &&
+            origScrollPageIntoView &&
+            typeof origScrollPageIntoView === "function"
+          ) {
             app.pdfViewer.scrollPageIntoView = origScrollPageIntoView;
           }
         } catch {}
@@ -399,7 +456,8 @@ export class Highlighter {
       if (!fc) return "(findController missing)";
 
       const q = fc?.state?.query ?? fc?._state?.query ?? fc?._query ?? "";
-      const m = fc?.state?.matchesCount?.total ?? fc?._state?.matchesCount?.total ?? "";
+      const m =
+        fc?.state?.matchesCount?.total ?? fc?._state?.matchesCount?.total ?? "";
 
       return `query="${String(q)}" matchesTotal=${String(m)}`;
     } catch (e) {
