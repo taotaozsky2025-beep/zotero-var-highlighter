@@ -44,8 +44,8 @@ class Addon {
 
   public showStartupNotification() {
     const progressWin = new Zotero.ProgressWindow();
-    progressWin.changeHeadline("插件加载状态");
-    progressWin.addDescription("Zotero 插件已成功加载！🎉");
+    progressWin.changeHeadline("plugin loading status");
+    progressWin.addDescription("var highlighter has been successfully loaded!");
     progressWin.show();
     progressWin.startCloseTimer(3000);
   }

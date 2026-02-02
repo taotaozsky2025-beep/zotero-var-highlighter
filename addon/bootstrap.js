@@ -9,15 +9,7 @@ var chromeHandle;
 
 function install(data, reason) {}
 
-function ZVH_alert(msg) {
-  try {
-    Services.prompt.alert(null, "ZVH bootstrap", String(msg));
-  } catch (e) {}
-}
-
 async function startup({ id, version, resourceURI, rootURI }, reason) {
-  ZVH_alert("startup() entered");
-
   var aomStartup = Components.classes[
     "@mozilla.org/addons/addon-manager-startup;1"
   ].getService(Components.interfaces.amIAddonManagerStartup);
@@ -26,8 +18,6 @@ async function startup({ id, version, resourceURI, rootURI }, reason) {
   chromeHandle = aomStartup.registerChrome(manifestURI, [
     ["content", "__addonRef__", rootURI + "content/"],
   ]);
-
-  ZVH_alert("registerChrome OK");
 
   // 安全 console：避免你之前的 console is not defined
   const safeConsole = (typeof console !== "undefined" && console) || {
@@ -63,11 +53,8 @@ async function startup({ id, version, resourceURI, rootURI }, reason) {
   const entry = `${rootURI}content/scripts/__addonRef__.js`;
 
   try {
-    ZVH_alert("loadSubScript begin: " + entry);
     Services.scriptloader.loadSubScript(entry, ctx);
-    ZVH_alert("loadSubScript OK");
   } catch (e) {
-    ZVH_alert("loadSubScript FAILED: " + e);
     try {
       Zotero.logError(e);
     } catch (_) {}
@@ -75,11 +62,8 @@ async function startup({ id, version, resourceURI, rootURI }, reason) {
   }
 
   try {
-    ZVH_alert("calling hooks.onStartup()");
     await Zotero.__addonInstance__.hooks.onStartup();
-    ZVH_alert("hooks.onStartup() OK");
   } catch (e) {
-    ZVH_alert("hooks.onStartup() FAILED: " + e);
     try {
       Zotero.logError(e);
     } catch (_) {}

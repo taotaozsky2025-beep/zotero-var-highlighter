@@ -13,11 +13,6 @@ async function onStartup() {
   Zotero.debug(
     `[${config.addonName}] onStartup: Zotero ready promises resolved`,
   );
-  (Services as any)?.prompt?.alert?.(
-    null,
-    "ZVH hooks",
-    "before Highlighter.activate()",
-  );
   try {
     // @ts-expect-error
     Highlighter.activate(Zotero[config.addonInstance]);
@@ -25,11 +20,6 @@ async function onStartup() {
   } catch (e) {
     Zotero.debug(`[${config.addonName}] ERROR activating Highlighter: ${e}`);
   }
-  (Services as any)?.prompt?.alert?.(
-    null,
-    "ZVH hooks",
-    "after Highlighter.activate()",
-  );
   const mainWindow = Zotero.getMainWindow();
   Zotero.debug(
     `[${config.addonName}] onStartup: getMainWindow() result: ${mainWindow ? "Found" : "Null"}`,

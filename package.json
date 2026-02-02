@@ -1,7 +1,7 @@
 {
   "name": "zotero-var-highlighter",
   "type": "module",
-  "version": "0.0.2-debug",
+  "version": "0.1.0-release",
   "description": "A Zotero plugin to highlight variables and trace their definitions in PDF reader.",
   "config": {
     "addonName": "Zotero Var Highlighter",
@@ -12,13 +12,13 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/windingwind/zotero-plugin-template.git"
+    "url": "git+https://github.com/taotaozsky2025-beep/zotero-var-highlighter.git"
   },
   "author": "Ruilin Li",
   "bugs": {
-    "url": "https://github.com/windingwind/zotero-plugin-template/issues"
+    "url": "https://github.com/taotaozsky2025-beep/zotero-var-highlighter/issues"
   },
-  "homepage": "https://github.com/windingwind/zotero-plugin-template#readme",
+  "homepage": "https://github.com/taotaozsky2025-beep/zotero-var-highlighter#readme",
   "license": "AGPL-3.0-or-later",
   "scripts": {
     "start": "zotero-plugin serve",
