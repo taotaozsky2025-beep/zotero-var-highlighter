@@ -8,7 +8,7 @@
 ---
 
 # Zotero Var Highlighter Documentation
-
+[Download Latest XPI](https://github.com/taotaozsky2025-beep/zotero-var-highlighter/releases/latest/download/zotero-var-highlighter.xpi)
 ## Overview
 
 **Zotero Var Highlighter** is a plugin designed to assist researchers in reading complex papers, particularly those heavy with mathematical variables or specific terminologies. It can highlight selected characters throughout the entire paper.
