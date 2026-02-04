@@ -9,7 +9,3 @@ prefs-table-title = 标题
 prefs-table-detail = 详情
 tabpanel-lib-tab-label = 库标签
 tabpanel-reader-tab-label = 阅读器标签
-preview-first-occurrence = 首次出现：第 { $page } 页
-preview-variable = 变量: "{ $text }"
-preview-click-to-jump = 点击跳转到第 { $page } 页
-preview-click-hint = 点击跳转到此页面
