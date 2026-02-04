@@ -9,3 +9,7 @@ prefs-table-title = Title
 prefs-table-detail = Detail
 tabpanel-lib-tab-label = Lib Tab
 tabpanel-reader-tab-label = Reader Tab
+preview-first-occurrence = First occurrence: Page { $page }
+preview-variable = Variable: "{ $text }"
+preview-click-to-jump = Click to jump to page { $page }
+preview-click-hint = Click to jump to this page
