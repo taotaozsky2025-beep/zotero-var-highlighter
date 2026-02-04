@@ -8,9 +8,7 @@
 ---
 
 # Zotero Var Highlighter Documentation
-
 [Download Latest XPI](https://github.com/taotaozsky2025-beep/zotero-var-highlighter/releases/latest/download/zotero-var-highlighter.xpi)
-
 ## Overview
 
 **Zotero Var Highlighter** is a plugin designed to assist researchers in reading complex papers, particularly those heavy with mathematical variables or specific terminologies. It can highlight selected characters throughout the entire paper.
@@ -23,24 +21,7 @@ When you **select any text** (such as a variable name, symbol, or keyword) in th
 
 1.  **Captures** the selected text.
 2.  **Searches** the entire PDF document for all occurrences of that text.
-3.  **Highlights** every matched text with a distinct color:
-    - The **first occurrence** in the entire document (typically the definition) is highlighted in **green** (customizable).
-    - All **other occurrences** are highlighted in **pink** (customizable).
-
-### First Occurrence Preview
-
-When you hover your mouse over any highlighted text, a **preview popup** appears showing:
-
-- The page number where the variable is first defined in the document.
-- A thumbnail preview of that page.
-- Click on the popup to jump directly to the definition page.
-
-### Custom Highlight Colors
-
-You can customize the highlight colors in the plugin preferences:
-
-- **First match color**: Color for the first occurrence (definition) in the document (default: green).
-- **Other matches color**: Color for all other occurrences (default: pink).
+3.  **Highlights** every matched text.
 
 ### Use Case
 
@@ -49,10 +30,3 @@ This is particularly useful when reading academic papers where you encounter a v
 ## Usage
 
 Simply open a PDF in Zotero and use your mouse to select a word or variable. The highlighting happens automatically.
-
-## Settings
-
-Access the plugin settings via `Edit > Settings > Zotero Var Highlighter` to customize:
-
-- Enable/disable the plugin
-- Set custom colors for first occurrence and other matches
