@@ -1,6 +1,5 @@
-pref-title = Zotero 变量高亮器
+pref-title = 插件模板设置示例
 pref-enable =
     .label = 开启
-pref-first-match-color = 首次出现颜色（定义）
-pref-other-match-color = 其他匹配项颜色
+pref-input = 输入
 pref-help = { $name } Build { $version } { $time }
