@@ -37,6 +37,8 @@ export class Highlighter {
   private static readonly AFTER_FIND_FORCE_FIRST_DELAY_MS = 200; // 等匹配完成后再强制首匹配（ms）
   private static readonly WAIT_FOR_FULL_SEARCH_MS = 2000; // 等待全文搜索完成的最大时间
   private static readonly POLL_INTERVAL_MS = 50; // 轮询间隔
+  private static readonly DOM_RENDER_DELAY_MS = 100; // 等待 PDF.js DOM 渲染完成的延迟
+  private static readonly PAGE_RENDER_COMPLETION_DELAY_MS = 50; // 页面渲染完成后标记全文第一个匹配的延迟
 
   // 默认高亮颜色
   private static readonly DEFAULT_FIRST_MATCH_COLOR = "#00FF00"; // 绿色 - 全文第一个匹配
@@ -55,6 +57,10 @@ export class Highlighter {
   // 预览窗口相关
   private static previewPopup: HTMLElement | null = null;
   private static currentApp: any = null;
+
+  // MutationObserver 用于监听页面渲染，重新标记全文第一个匹配
+  private static pageRenderObserver: MutationObserver | null = null;
+  private static currentPdfWindow: any = null;
 
   // Localization strings
   private static readonly STRINGS = {
@@ -198,6 +204,13 @@ export class Highlighter {
 
   public static deactivate() {
     this.popup("deactivate()", `tag=${this.TAG}`);
+
+    // 清理 MutationObserver
+    if (this.pageRenderObserver) {
+      this.pageRenderObserver.disconnect();
+      this.pageRenderObserver = null;
+    }
+
     Zotero.Reader.unregisterEventListener(
       "renderTextSelectionPopup",
       this.handler,
@@ -333,18 +346,26 @@ export class Highlighter {
     // 7) 应用自定义颜色
     this.applyCustomHighlightColors(app, w);
 
-    // 8) 解除滚动锁（若设置了）
+    // 8) 在 DOM 中标记全文第一个匹配
+    //    等待一小段时间让 PDF.js 完成 DOM 渲染
+    await this.delay(this.DOM_RENDER_DELAY_MS);
+    this.markGlobalFirstMatchInDOM(app, w);
+
+    // 9) 设置页面渲染监听器，以便在目标页面被懒加载渲染时重新标记
+    this.setupPageRenderObserver(app, w);
+
+    // 10) 解除滚动锁（若设置了）
     if (unlock) {
       // 锁函数内部会自动定时解锁；这里额外提示即可
       this.popup("scroll lock", "will auto-release", 1200);
     }
 
-    // 9) 回读状态（用于确认 controller 接收 query）
+    // 11) 回读状态（用于确认 controller 接收 query）
     await this.delay(120);
     const state = this.peekFindState(app);
     this.popup("peek find state", state, 2600);
 
-    // 10) 设置预览窗口的悬停事件
+    // 12) 设置预览窗口的悬停事件
     this.setupPreviewHover(app, w, reader);
   }
 
@@ -622,6 +643,7 @@ export class Highlighter {
   /**
    * 应用自定义的高亮颜色
    * 使用 CSS 覆盖 PDF.js 默认的高亮颜色
+   * 使用自定义 data 属性来标识全文第一个匹配，避免依赖 PDF.js 的 selected 类
    */
   private static applyCustomHighlightColors(app: any, w: any): void {
     try {
@@ -638,16 +660,22 @@ export class Highlighter {
       }
 
       // 创建新的样式
+      // 注意：不再依赖 .selected 类，而是使用我们自己的 data-zvh-first-match 属性
       const style = doc.createElement("style");
       style.id = "zvh-highlight-colors";
       style.textContent = `
-        /* 其他匹配的高亮颜色 */
+        /* 所有匹配的默认高亮颜色（粉色）*/
         .textLayer .highlight {
           background-color: ${otherColor} !important;
           opacity: 0.4 !important;
         }
-        /* 当前匹配（全文第一个）的高亮颜色 */
+        /* 覆盖 PDF.js 的 .selected 样式，使其与普通高亮一样（粉色）*/
         .textLayer .highlight.selected {
+          background-color: ${otherColor} !important;
+          opacity: 0.4 !important;
+        }
+        /* 全文第一个匹配使用特殊颜色（绿色）- 使用我们自己的 data 属性 */
+        .textLayer .highlight[data-zvh-first-match="true"] {
           background-color: ${firstColor} !important;
           opacity: 0.5 !important;
         }
@@ -661,6 +689,126 @@ export class Highlighter {
       );
     } catch (e) {
       this.log(`applyCustomHighlightColors failed: ${String(e)}`);
+    }
+  }
+
+  /**
+   * 在 DOM 中标记全文第一个匹配
+   * 使用自定义 data 属性而不是依赖 PDF.js 的 selected 类
+   */
+  private static markGlobalFirstMatchInDOM(app: any, w: any): void {
+    try {
+      const doc = w?.document;
+      if (!doc || !this.currentGlobalFirstMatch) return;
+
+      const { pageIdx, matchIdx } = this.currentGlobalFirstMatch;
+
+      // 先移除所有旧的标记
+      const oldMarks = doc.querySelectorAll("[data-zvh-first-match]");
+      oldMarks.forEach((el: Element) => {
+        el.removeAttribute("data-zvh-first-match");
+      });
+
+      // 找到对应页面的 textLayer
+      const pageContainer = doc.querySelector(
+        `[data-page-number="${pageIdx + 1}"]`,
+      );
+      if (!pageContainer) {
+        this.popup(
+          "markGlobalFirstMatch",
+          `page container not found for page ${pageIdx + 1}`,
+          2000,
+        );
+        return;
+      }
+
+      const textLayer = pageContainer.querySelector(".textLayer");
+      if (!textLayer) {
+        this.popup("markGlobalFirstMatch", "textLayer not found", 2000);
+        return;
+      }
+
+      // 找到该页面中的所有高亮元素
+      const highlights = textLayer.querySelectorAll(".highlight");
+      if (highlights.length === 0) {
+        this.popup("markGlobalFirstMatch", "no highlights found", 2000);
+        return;
+      }
+
+      // 标记第 matchIdx 个高亮元素为全文第一个匹配
+      if (matchIdx < highlights.length) {
+        highlights[matchIdx].setAttribute("data-zvh-first-match", "true");
+        this.popup(
+          "markGlobalFirstMatch",
+          `marked highlight ${matchIdx} on page ${pageIdx + 1}`,
+          1600,
+        );
+      } else {
+        this.popup(
+          "markGlobalFirstMatch",
+          `matchIdx ${matchIdx} >= highlights.length ${highlights.length}`,
+          2000,
+        );
+      }
+    } catch (e) {
+      this.log(`markGlobalFirstMatchInDOM failed: ${String(e)}`);
+    }
+  }
+
+  /**
+   * 设置 MutationObserver 来监听页面渲染事件
+   * 当全文第一个匹配所在的页面被渲染时，重新标记该高亮元素
+   */
+  private static setupPageRenderObserver(app: any, w: any): void {
+    try {
+      // 清理旧的 observer
+      if (this.pageRenderObserver) {
+        this.pageRenderObserver.disconnect();
+        this.pageRenderObserver = null;
+      }
+
+      const doc = w?.document;
+      if (!doc || !this.currentGlobalFirstMatch) return;
+
+      this.currentPdfWindow = w;
+
+      const viewerContainer = doc.querySelector("#viewer, .pdfViewer");
+      if (!viewerContainer) return;
+
+      // 创建新的 MutationObserver
+      this.pageRenderObserver = new MutationObserver((mutations) => {
+        // 检查是否有新的高亮元素被添加到目标页面
+        if (!this.currentGlobalFirstMatch) return;
+
+        const { pageIdx } = this.currentGlobalFirstMatch;
+        const targetPageNumber = pageIdx + 1;
+
+        for (const mutation of mutations) {
+          if (mutation.type === "childList") {
+            // 检查是否是目标页面的变化
+            const target = mutation.target as Element;
+            const pageContainer =
+              target.closest(`[data-page-number="${targetPageNumber}"]`) ||
+              target.querySelector(`[data-page-number="${targetPageNumber}"]`);
+
+            if (pageContainer) {
+              // 延迟执行标记，等待 PDF.js 完成渲染
+              setTimeout(() => {
+                this.markGlobalFirstMatchInDOM(app, this.currentPdfWindow);
+              }, this.PAGE_RENDER_COMPLETION_DELAY_MS);
+              break;
+            }
+          }
+        }
+      });
+
+      // 开始观察
+      this.pageRenderObserver.observe(viewerContainer, {
+        childList: true,
+        subtree: true,
+      });
+    } catch (e) {
+      this.log(`setupPageRenderObserver failed: ${String(e)}`);
     }
   }
 
