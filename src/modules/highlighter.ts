@@ -58,6 +58,11 @@ export class Highlighter {
   private static previewPopup: HTMLElement | null = null;
   private static hoverTimeout: ReturnType<typeof setTimeout> | null = null;
 
+  // 缓存已注入样式的文档和颜色
+  private static injectedStyleDocs: WeakSet<Document> = new WeakSet();
+  private static lastInjectedColors: { first: string; other: string } | null =
+    null;
+
   // 稳定引用，便于 unregister
   private static readonly handler = (evt: RenderTextSelectionPopupEvent) => {
     void Highlighter.onRenderTextSelectionPopup(evt);
@@ -583,6 +588,7 @@ export class Highlighter {
 
   /**
    * 注入自定义颜色样式到文本层
+   * 使用缓存避免重复更新样式
    */
   private static injectCustomStyles(
     textLayerDiv: Element,
@@ -592,6 +598,14 @@ export class Highlighter {
     try {
       const doc = textLayerDiv.ownerDocument;
       if (!doc) return;
+
+      // 检查颜色是否已更改，如果没有更改且已注入样式，则跳过
+      const colorsUnchanged =
+        this.lastInjectedColors?.first === firstMatchColor &&
+        this.lastInjectedColors?.other === otherMatchColor;
+      if (colorsUnchanged && this.injectedStyleDocs.has(doc)) {
+        return;
+      }
 
       const styleId = "zvh-custom-highlight-styles";
       let styleEl = doc.getElementById(styleId) as HTMLStyleElement | null;
@@ -613,6 +627,13 @@ export class Highlighter {
           background-color: ${firstMatchColor} !important;
         }
       `;
+
+      // 更新缓存
+      this.lastInjectedColors = {
+        first: firstMatchColor,
+        other: otherMatchColor,
+      };
+      this.injectedStyleDocs.add(doc);
     } catch (e) {
       this.log(`injectCustomStyles failed: ${String(e)}`);
     }
@@ -668,25 +689,21 @@ export class Highlighter {
 
             const htmlEl = el as HTMLElement;
 
-            // 移除旧的事件监听器（如果有的话）
-            htmlEl.removeEventListener(
+            // 检查是否已经添加了事件监听器（通过数据属性标记）
+            if (htmlEl.dataset.zvhHoverSetup === "true") return;
+
+            // 添加事件监听器
+            htmlEl.addEventListener(
               "mouseenter",
               this.handleHighlightMouseEnter,
             );
-            htmlEl.removeEventListener(
+            htmlEl.addEventListener(
               "mouseleave",
               this.handleHighlightMouseLeave,
             );
 
-            // 添加新的事件监听器
-            htmlEl.addEventListener(
-              "mouseenter",
-              this.handleHighlightMouseEnter,
-            );
-            htmlEl.addEventListener(
-              "mouseleave",
-              this.handleHighlightMouseLeave,
-            );
+            // 标记已设置
+            htmlEl.dataset.zvhHoverSetup = "true";
 
             // 设置样式以便悬停
             htmlEl.style.cursor = "pointer";
