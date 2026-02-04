@@ -1,6 +1,5 @@
-pref-title = Zotero Var Highlighter
+pref-title = Addon Template Example
 pref-enable =
     .label = Enable
-pref-first-match-color = First Match Color (Definition)
-pref-other-match-color = Other Matches Color
+pref-input = Input
 pref-help = { $name } Build { $version } { $time }
