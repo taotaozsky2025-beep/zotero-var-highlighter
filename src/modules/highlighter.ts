@@ -56,10 +56,67 @@ export class Highlighter {
   private static previewPopup: HTMLElement | null = null;
   private static currentApp: any = null;
 
+  // Localization strings
+  private static readonly STRINGS = {
+    en: {
+      firstOccurrence: "First occurrence: Page",
+      variable: "Variable:",
+      clickToJump: "Click to jump to page",
+      clickHint: "Click to jump to this page",
+    },
+    zh: {
+      firstOccurrence: "首次出现：第",
+      firstOccurrenceSuffix: "页",
+      variable: "变量:",
+      clickToJump: "点击跳转到第",
+      clickToJumpSuffix: "页",
+      clickHint: "点击跳转到此页面",
+    },
+  };
+
   // 稳定引用，便于 unregister
   private static readonly handler = (evt: RenderTextSelectionPopupEvent) => {
     void Highlighter.onRenderTextSelectionPopup(evt);
   };
+
+  /**
+   * Get current locale strings
+   */
+  private static getStrings(): typeof Highlighter.STRINGS.en {
+    try {
+      const locale = Zotero.locale || "en-US";
+      if (locale.startsWith("zh")) {
+        return this.STRINGS.zh as typeof Highlighter.STRINGS.en;
+      }
+    } catch {}
+    return this.STRINGS.en;
+  }
+
+  /**
+   * Get localized text for "First occurrence: Page X"
+   */
+  private static getFirstOccurrenceText(pageNumber: number): string {
+    try {
+      const locale = Zotero.locale || "en-US";
+      if (locale.startsWith("zh")) {
+        return `${this.STRINGS.zh.firstOccurrence} ${pageNumber} ${this.STRINGS.zh.firstOccurrenceSuffix}`;
+      }
+    } catch {}
+    return `${this.STRINGS.en.firstOccurrence} ${pageNumber}`;
+  }
+
+  /**
+   * Get localized text for "Click to jump to page X"
+   */
+  private static getClickToJumpText(pageNumber: number): string {
+    try {
+      const locale = Zotero.locale || "en-US";
+      if (locale.startsWith("zh")) {
+        return `${this.STRINGS.zh.clickToJump} ${pageNumber} ${this.STRINGS.zh.clickToJumpSuffix}`;
+      }
+    } catch {}
+    return `${this.STRINGS.en.clickToJump} ${pageNumber}`;
+  }
 
   private static log(msg: string) {
     try {
@@ -478,10 +535,18 @@ export class Highlighter {
       while (Date.now() - startTime < this.WAIT_FOR_FULL_SEARCH_MS) {
         // 检查是否有挂起的搜索
         const pendingMatches = fc._pendingFindMatches ?? fc.pendingFindMatches;
-        if (pendingMatches === 0 || pendingMatches === undefined) {
+        // Only break when we know search is complete (pendingMatches === 0)
+        // If property doesn't exist, continue checking pageMatches
+        const searchComplete =
+          pendingMatches === 0 ||
+          (pendingMatches === undefined &&
+            fc.pageMatches !== undefined &&
+            fc._pageMatches !== undefined);
+
+        if (searchComplete) {
           // 检查 pageMatches 数组的长度是否等于总页数
           const pageMatches = fc.pageMatches ?? fc._pageMatches ?? [];
-          if (Array.isArray(pageMatches) && pageMatches.length >= totalPages) {
+          if (Array.isArray(pageMatches) && pageMatches.length === totalPages) {
             allPagesSearched = true;
             break;
           }
@@ -709,6 +774,9 @@ export class Highlighter {
       popup.style.left = `${left}px`;
       popup.style.top = `${top}px`;
 
+      // Get localized strings
+      const strings = this.getStrings();
+
       // 添加标题
       const title = doc.createElement("div");
       title.style.cssText = `
@@ -719,7 +787,7 @@ export class Highlighter {
         font-size: 14px;
         color: #333;
       `;
-      title.textContent = `First occurrence: Page ${pageNumber}`;
+      title.textContent = this.getFirstOccurrenceText(pageNumber);
       popup.appendChild(title);
 
       // 添加文本内容
@@ -729,7 +797,7 @@ export class Highlighter {
         color: #666;
         margin-bottom: 8px;
       `;
-      content.textContent = `Variable: "${this.currentSelectedText}"`;
+      content.textContent = `${strings.variable} "${this.currentSelectedText}"`;
       popup.appendChild(content);
 
       // 尝试获取页面缩略图
@@ -772,7 +840,7 @@ export class Highlighter {
           color: #999;
           font-size: 12px;
         `;
-        placeholder.textContent = `Click to jump to page ${pageNumber}`;
+        placeholder.textContent = this.getClickToJumpText(pageNumber);
         popup.appendChild(placeholder);
       }
 
@@ -791,7 +859,7 @@ export class Highlighter {
         margin-top: 8px;
         text-align: center;
       `;
-      hint.textContent = "Click to jump to this page";
+      hint.textContent = strings.clickHint;
       popup.appendChild(hint);
 
       doc.body.appendChild(popup);
