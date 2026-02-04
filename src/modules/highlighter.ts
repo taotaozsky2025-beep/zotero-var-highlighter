@@ -37,6 +37,8 @@ export class Highlighter {
   private static readonly AFTER_FIND_FORCE_FIRST_DELAY_MS = 200; // 等匹配完成后再强制首匹配（ms）
   private static readonly WAIT_FOR_FULL_SEARCH_MS = 2000; // 等待全文搜索完成的最大时间
   private static readonly POLL_INTERVAL_MS = 50; // 轮询间隔
+  private static readonly DOM_RENDER_DELAY_MS = 100; // 等待 PDF.js DOM 渲染完成的延迟
+  private static readonly PAGE_RENDER_COMPLETION_DELAY_MS = 50; // 页面渲染完成后标记全文第一个匹配的延迟
 
   // 默认高亮颜色
   private static readonly DEFAULT_FIRST_MATCH_COLOR = "#00FF00"; // 绿色 - 全文第一个匹配
@@ -346,7 +348,7 @@ export class Highlighter {
 
     // 8) 在 DOM 中标记全文第一个匹配
     //    等待一小段时间让 PDF.js 完成 DOM 渲染
-    await this.delay(100);
+    await this.delay(this.DOM_RENDER_DELAY_MS);
     this.markGlobalFirstMatchInDOM(app, w);
 
     // 9) 设置页面渲染监听器，以便在目标页面被懒加载渲染时重新标记
@@ -793,7 +795,7 @@ export class Highlighter {
               // 延迟执行标记，等待 PDF.js 完成渲染
               setTimeout(() => {
                 this.markGlobalFirstMatchInDOM(app, this.currentPdfWindow);
-              }, 50);
+              }, this.PAGE_RENDER_COMPLETION_DELAY_MS);
               break;
             }
           }
