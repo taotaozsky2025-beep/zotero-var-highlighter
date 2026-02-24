@@ -21,7 +21,7 @@ type GlobalFirstMatch = {
 
 export class Highlighter {
   // 版本指纹：用来确认你运行的就是这份文件
-  private static readonly TAG = "ZVH-highlighter-2026-02-04-r1";
+  private static readonly TAG = "ZVH-highlighter-2026-02-25-r1";
 
   // Debug
   private static readonly DEBUG_POPUP = false;
