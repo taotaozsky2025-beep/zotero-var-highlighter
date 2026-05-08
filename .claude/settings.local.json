@@ -1,7 +1,9 @@
 {
   "permissions": {
     "allow": [
-      "PowerShell(Stop-Process -Name zotero -Force -ErrorAction SilentlyContinue; Start-Sleep -Seconds 2; \\(Get-Process -Name zotero -ErrorAction SilentlyContinue | Measure-Object\\).Count)"
+      "PowerShell(Stop-Process -Name zotero -Force -ErrorAction SilentlyContinue; Start-Sleep -Seconds 2; \\(Get-Process -Name zotero -ErrorAction SilentlyContinue | Measure-Object\\).Count)",
+      "WebFetch(domain:github.com)",
+      "WebSearch"
     ]
   }
 }

@@ -54,7 +54,7 @@ export class Highlighter {
   // 这类私有调用在当前 Zotero/PDF.js 组合中会导致 reader 崩溃。
   // 这里用 DOM class 把全文第一处视觉上标成“当前匹配”。
   private static readonly MARK_GLOBAL_FIRST_MATCH = true;
-  private static readonly ENABLE_HOVER_PREVIEW = false;
+  private static readonly ENABLE_HOVER_PREVIEW = true;
   private static readonly SELECTION_DEBOUNCE_MS = 500;
   private static readonly FIRST_MARK_CLASS = "zvh-global-first-match";
   private static readonly FIRST_MARK_STYLE_ATTR = "data-zvh-first-match-style";

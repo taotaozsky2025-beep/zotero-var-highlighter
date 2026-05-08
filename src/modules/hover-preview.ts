@@ -9,8 +9,9 @@ export interface PreviewContext {
 interface ReaderState {
   reader: Reader;
   ctx: PreviewContext;
-  iframeWin: any;
-  iframeDoc: Document;
+  innerDoc: Document;
+  innerWin: any;
+  outerWin: any;
   popupEl: HTMLDivElement;
   popupCanvas: HTMLCanvasElement;
   popupHeader: HTMLDivElement;
@@ -22,19 +23,22 @@ interface ReaderState {
 }
 
 export class HoverPreview {
-  private static readonly TAG = "ZVH-hover-preview-2026-05-07-r1";
+  private static readonly TAG = "ZVH-hover-preview-2026-05-08-r2";
 
   private static readonly DEBUG_POPUP = false;
   private static readonly POPUP_THROTTLE_MS = 0;
 
   private static readonly HOVER_DELAY_MS = 350;
   private static readonly REENTRY_GRACE_MS = 120;
-  private static readonly POPUP_WIDTH_PX = 360;
-  private static readonly POPUP_MAX_HEIGHT_PX = 220;
-  private static readonly CROP_PAD_TOP_PX = 40;
-  private static readonly CROP_PAD_BOTTOM_PX = 80;
-  private static readonly CROP_PAD_X_PX = 24;
+  private static readonly POPUP_MAX_WIDTH_PX = 560;
+  private static readonly POPUP_MAX_HEIGHT_PX = 680;
+  private static readonly POPUP_MIN_WIDTH_PX = 280;
+  // 纵向裁切策略：以 first match 为中心向上/下扩展，
+  // 上 40% / 下 60% —— 变量定义的解释通常在定义后方
+  private static readonly VERTICAL_FOCUS_RATIO = 0.4;
   private static readonly STYLE_ATTR = "data-zvh-hover-preview-style";
+
+  private static readonly FIRST_MARK_CLASS = "zvh-global-first-match";
 
   private static debugSeq = 0;
   private static lastPopupAt = 0;
@@ -90,7 +94,7 @@ export class HoverPreview {
 
   /**
    * 由 Highlighter 在 find 稳定（或每次 firstPageIdx 变化）时回调。
-   * 幂等：相同 (query, pageIdx) 不重建监听器/popup。
+   * 同 (query, pageIdx) → 仅 hide popup 后复用 state；变了 → 销毁旧 state 重建。
    */
   public static onFindCommitted(reader: Reader, ctx: PreviewContext) {
     if (!this.activated || !reader || !ctx) return;
@@ -101,11 +105,13 @@ export class HoverPreview {
         const same =
           existing.ctx.query === ctx.query &&
           existing.ctx.pageIdx === ctx.pageIdx;
-        existing.ctx = ctx;
-        if (!same) {
+        if (same) {
+          existing.ctx = ctx;
           this.hidePopupNow(existing);
+          return;
         }
-        return;
+        // query 或 pageIdx 变了 —— 旧的 inner doc/listener 可能已对应失效的搜索状态，干净重建
+        this.tearDown(reader);
       }
 
       const state = this.setupForReader(reader, ctx);
@@ -137,39 +143,52 @@ export class HoverPreview {
     ctx: PreviewContext,
   ): ReaderState | null {
     try {
-      const iframeWin = reader?._iframeWindow;
-      if (!iframeWin) {
+      const outerWin = reader?._iframeWindow;
+      if (!outerWin) {
         this.popup("setup return", "no _iframeWindow", 2200);
         return null;
       }
-      const iframeDoc: Document = iframeWin.document;
-      if (!iframeDoc || !iframeDoc.body) {
-        this.popup("setup return", "no iframe document/body", 2200);
+
+      const app = this.getAppFromOuter(outerWin);
+      if (!app) {
+        this.popup("setup return", "no PDFViewerApplication", 2200);
         return null;
       }
 
-      this.injectStyle(iframeDoc);
+      const innerDoc = this.getPdfInnerDoc(app, reader);
+      if (!innerDoc || !innerDoc.body) {
+        this.popup("setup return", "no inner pdfjs doc/body", 2200);
+        return null;
+      }
+      const innerWin = innerDoc.defaultView;
+      if (!innerWin) {
+        this.popup("setup return", "no inner doc.defaultView", 2200);
+        return null;
+      }
 
-      const popupEl = iframeDoc.createElement("div");
+      this.injectStyle(innerDoc);
+
+      const popupEl = innerDoc.createElement("div");
       popupEl.className = "zvh-hover-preview";
       popupEl.setAttribute("hidden", "");
 
-      const popupHeader = iframeDoc.createElement("div");
+      const popupHeader = innerDoc.createElement("div");
       popupHeader.className = "zvh-hp-header";
       popupHeader.textContent = "";
 
-      const popupCanvas = iframeDoc.createElement("canvas");
+      const popupCanvas = innerDoc.createElement("canvas");
       popupCanvas.className = "zvh-hp-canvas";
 
       popupEl.appendChild(popupHeader);
       popupEl.appendChild(popupCanvas);
-      iframeDoc.body.appendChild(popupEl);
+      innerDoc.body.appendChild(popupEl);
 
       const state: ReaderState = {
         reader,
         ctx,
-        iframeWin,
-        iframeDoc,
+        innerDoc,
+        innerWin,
+        outerWin,
         popupEl,
         popupCanvas,
         popupHeader,
@@ -196,8 +215,8 @@ export class HoverPreview {
 .zvh-hover-preview {
   position: fixed;
   z-index: 999999;
-  width: ${this.POPUP_WIDTH_PX}px;
-  max-height: ${this.POPUP_MAX_HEIGHT_PX}px;
+  min-width: ${this.POPUP_MIN_WIDTH_PX}px;
+  max-width: ${this.POPUP_MAX_WIDTH_PX}px;
   background: #ffffff;
   border: 1px solid rgba(0,0,0,0.18);
   border-radius: 6px;
@@ -218,8 +237,6 @@ export class HoverPreview {
 }
 .zvh-hp-canvas {
   display: block;
-  width: 100%;
-  height: auto;
   background: #fafafa;
 }
 `;
@@ -228,19 +245,23 @@ export class HoverPreview {
   }
 
   private static attachListeners(state: ReaderState) {
-    const { iframeDoc, iframeWin, popupEl } = state;
+    const { innerDoc, innerWin, outerWin, popupEl } = state;
 
     const onMouseOver = (e: MouseEvent) => this.onMouseOver(state, e);
     const onMouseOut = (e: MouseEvent) => this.onMouseOut(state, e);
-    const onScrollOrZoom = () => this.hidePopupNow(state);
+    const onScrollOrResize = () => this.hidePopupNow(state);
     const onUnload = () => this.tearDown(state.reader);
 
-    iframeDoc.addEventListener("mouseover", onMouseOver, true);
-    iframeDoc.addEventListener("mouseout", onMouseOut, true);
+    innerDoc.addEventListener("mouseover", onMouseOver, true);
+    innerDoc.addEventListener("mouseout", onMouseOut, true);
 
     const popupEnter = () => {
       if (state.pendingHideTimer != null) {
-        iframeWin.clearTimeout(state.pendingHideTimer);
+        try {
+          state.innerWin.clearTimeout(state.pendingHideTimer);
+        } catch {
+          /* ignore */
+        }
         state.pendingHideTimer = null;
       }
     };
@@ -252,31 +273,40 @@ export class HoverPreview {
 
     const container = this.getScrollContainer(state);
     if (container) {
-      container.addEventListener("scroll", onScrollOrZoom, { passive: true });
+      try {
+        container.addEventListener("scroll", onScrollOrResize, {
+          passive: true,
+        });
+      } catch {
+        /* ignore */
+      }
     }
 
-    let scaleHandler: ((d: any) => void) | null = null;
     try {
-      const app = this.getApp(state);
-      const eb = app?.eventBus;
-      if (eb && typeof eb.on === "function") {
-        scaleHandler = (_d: any) => onScrollOrZoom();
-        eb.on("scalechanged", scaleHandler);
-      }
+      innerWin.addEventListener("resize", onScrollOrResize);
     } catch {
       /* ignore */
     }
 
-    iframeWin.addEventListener("unload", onUnload);
+    try {
+      innerWin.addEventListener("unload", onUnload);
+    } catch {
+      /* ignore */
+    }
+    try {
+      outerWin?.addEventListener?.("unload", onUnload);
+    } catch {
+      /* ignore */
+    }
 
     state.unloadCleanup.push(() => {
       try {
-        iframeDoc.removeEventListener("mouseover", onMouseOver, true);
+        innerDoc.removeEventListener("mouseover", onMouseOver, true);
       } catch {
         /* ignore */
       }
       try {
-        iframeDoc.removeEventListener("mouseout", onMouseOut, true);
+        innerDoc.removeEventListener("mouseout", onMouseOut, true);
       } catch {
         /* ignore */
       }
@@ -291,21 +321,22 @@ export class HoverPreview {
         /* ignore */
       }
       try {
-        container?.removeEventListener("scroll", onScrollOrZoom);
+        container?.removeEventListener("scroll", onScrollOrResize);
       } catch {
         /* ignore */
       }
       try {
-        const app = this.getApp(state);
-        const eb = app?.eventBus;
-        if (scaleHandler && eb && typeof eb.off === "function") {
-          eb.off("scalechanged", scaleHandler);
-        }
+        innerWin.removeEventListener("resize", onScrollOrResize);
       } catch {
         /* ignore */
       }
       try {
-        iframeWin.removeEventListener("unload", onUnload);
+        innerWin.removeEventListener("unload", onUnload);
+      } catch {
+        /* ignore */
+      }
+      try {
+        outerWin?.removeEventListener?.("unload", onUnload);
       } catch {
         /* ignore */
       }
@@ -323,22 +354,32 @@ export class HoverPreview {
       if (!target || !target.closest) return;
       const hl = target.closest(".textLayer .highlight") as Element | null;
       if (!hl) return;
+      // 排除 PDF.js 当前匹配（绿色）和我们自己标的全文首匹配 —— 都指向首处，无需预览
       if (hl.classList.contains("selected")) return;
+      if (hl.classList.contains(this.FIRST_MARK_CLASS)) return;
       if (state.hoverTarget === hl) return;
       state.hoverTarget = hl;
 
       if (state.pendingHideTimer != null) {
-        state.iframeWin.clearTimeout(state.pendingHideTimer);
+        try {
+          state.innerWin.clearTimeout(state.pendingHideTimer);
+        } catch {
+          /* ignore */
+        }
         state.pendingHideTimer = null;
       }
       if (state.popupVisible) return;
 
       if (state.pendingShowTimer != null) {
-        state.iframeWin.clearTimeout(state.pendingShowTimer);
+        try {
+          state.innerWin.clearTimeout(state.pendingShowTimer);
+        } catch {
+          /* ignore */
+        }
       }
       const x = e.clientX;
       const y = e.clientY;
-      state.pendingShowTimer = state.iframeWin.setTimeout(() => {
+      state.pendingShowTimer = state.innerWin.setTimeout(() => {
         state.pendingShowTimer = null;
         void this.showPopup(state, x, y);
       }, this.HOVER_DELAY_MS);
@@ -357,11 +398,21 @@ export class HoverPreview {
       const newHl = related?.closest?.(
         ".textLayer .highlight",
       ) as Element | null;
-      if (newHl && !newHl.classList.contains("selected")) return;
+      if (
+        newHl &&
+        !newHl.classList.contains("selected") &&
+        !newHl.classList.contains(this.FIRST_MARK_CLASS)
+      ) {
+        return;
+      }
 
       state.hoverTarget = null;
       if (state.pendingShowTimer != null) {
-        state.iframeWin.clearTimeout(state.pendingShowTimer);
+        try {
+          state.innerWin.clearTimeout(state.pendingShowTimer);
+        } catch {
+          /* ignore */
+        }
         state.pendingShowTimer = null;
       }
       if (state.popupVisible) {
@@ -374,18 +425,27 @@ export class HoverPreview {
 
   private static scheduleHide(state: ReaderState) {
     if (state.pendingHideTimer != null) {
-      state.iframeWin.clearTimeout(state.pendingHideTimer);
+      try {
+        state.innerWin.clearTimeout(state.pendingHideTimer);
+      } catch {
+        /* ignore */
+      }
     }
-    state.pendingHideTimer = state.iframeWin.setTimeout(() => {
-      state.pendingHideTimer = null;
+    try {
+      state.pendingHideTimer = state.innerWin.setTimeout(() => {
+        state.pendingHideTimer = null;
+        this.hidePopupNow(state);
+      }, this.REENTRY_GRACE_MS);
+    } catch {
+      // setTimeout 失败兜底：直接同步隐藏
       this.hidePopupNow(state);
-    }, this.REENTRY_GRACE_MS);
+    }
   }
 
   private static hidePopupNow(state: ReaderState) {
     if (state.pendingShowTimer != null) {
       try {
-        state.iframeWin.clearTimeout(state.pendingShowTimer);
+        state.innerWin.clearTimeout(state.pendingShowTimer);
       } catch {
         /* ignore */
       }
@@ -393,7 +453,7 @@ export class HoverPreview {
     }
     if (state.pendingHideTimer != null) {
       try {
-        state.iframeWin.clearTimeout(state.pendingHideTimer);
+        state.innerWin.clearTimeout(state.pendingHideTimer);
       } catch {
         /* ignore */
       }
@@ -414,6 +474,11 @@ export class HoverPreview {
     mouseY: number,
   ) {
     try {
+      // innerDoc 可能在异步等待间被释放（reader 关闭、document 重建）
+      if (!state.innerDoc?.body || !state.innerDoc.defaultView) {
+        this.popup("showPopup skip", "innerDoc gone", 1200);
+        return;
+      }
       const drew = this.drawPreviewFromViewer(state);
       if (!drew) {
         this.popup("showPopup skip", "page not rendered or no highlight", 1400);
@@ -429,83 +494,115 @@ export class HoverPreview {
   }
 
   /**
-   * 直接复用 PDF.js viewer 已渲染的 page canvas，从中裁切定义所在区域绘到 popup canvas。
-   * 前提：定义页已被 viewer 渲染过（一般成立，因为 forceGlobalFirstAsCurrentMatch 会触发渲染）。
-   * 失败返回 false（调用方静默不显示 popup，不降级到文本）。
+   * 复用 PDF.js viewer 已渲染的 page canvas，从中裁切定义所在区域绘到 popup canvas。
+   * popup canvas 与 source canvas 同在 inner pdfjs document，drawImage 在同一 realm，安全。
+   * 前提：定义页已被 viewer 渲染（一般成立，因为 forceFirstMatch / marker 流程会触发渲染）。
+   * 失败返回 false（调用方静默不显示 popup）。
    */
   private static drawPreviewFromViewer(state: ReaderState): boolean {
-    const app = this.getApp(state);
-    const pageView = app?.pdfViewer?._pages?.[state.ctx.pageIdx];
-    if (!pageView) return false;
-
-    const sourceCanvas: HTMLCanvasElement | null = pageView.canvas ?? null;
-    const textLayerDiv: HTMLElement | null =
-      pageView.textLayer?.div ?? pageView.textLayer?.textLayerDiv ?? null;
-    if (!sourceCanvas || !textLayerDiv) return false;
-
-    const firstHl = textLayerDiv.querySelector(
-      ".highlight",
-    ) as HTMLElement | null;
-    if (!firstHl) return false;
-
-    const tlRect = textLayerDiv.getBoundingClientRect();
-    const hlRect = firstHl.getBoundingClientRect();
-    if (tlRect.width <= 0 || tlRect.height <= 0) return false;
-
-    const scale = sourceCanvas.width / tlRect.width;
-    const sx = (hlRect.left - tlRect.left) * scale;
-    const sy = (hlRect.top - tlRect.top) * scale;
-    const sw = hlRect.width * scale;
-    const sh = hlRect.height * scale;
-
-    const padTop = this.CROP_PAD_TOP_PX * scale;
-    const padBottom = this.CROP_PAD_BOTTOM_PX * scale;
-    const padX = this.CROP_PAD_X_PX * scale;
-
-    const cropX = Math.max(0, sx - padX);
-    const cropY = Math.max(0, sy - padTop);
-    let cropW = Math.min(sourceCanvas.width - cropX, sw + padX * 2);
-    let cropH = Math.min(sourceCanvas.height - cropY, sh + padTop + padBottom);
-    cropW = Math.max(1, cropW);
-    cropH = Math.max(1, cropH);
-
-    const popupW = this.POPUP_WIDTH_PX;
-    const drawScale = popupW / cropW;
-    const popupH = Math.min(
-      this.POPUP_MAX_HEIGHT_PX,
-      Math.round(cropH * drawScale),
-    );
-
-    const popupCanvas = state.popupCanvas;
-    popupCanvas.width = popupW;
-    popupCanvas.height = popupH;
-
-    const ctx2d = popupCanvas.getContext(
-      "2d",
-    ) as CanvasRenderingContext2D | null;
-    if (!ctx2d) return false;
-
-    ctx2d.fillStyle = "#fafafa";
-    ctx2d.fillRect(0, 0, popupW, popupH);
     try {
-      ctx2d.drawImage(
-        sourceCanvas,
-        cropX,
-        cropY,
-        cropW,
-        cropH,
-        0,
-        0,
-        popupW,
-        popupH,
-      );
+      const app = this.getAppFromOuter(state.outerWin);
+      if (!app) return false;
+      const pageView = app?.pdfViewer?._pages?.[state.ctx.pageIdx];
+      if (!pageView) return false;
+
+      const sourceCanvas: HTMLCanvasElement | null = pageView.canvas ?? null;
+      const textLayerDiv: HTMLElement | null =
+        pageView.textLayer?.div ?? pageView.textLayer?.textLayerDiv ?? null;
+      if (!sourceCanvas || !textLayerDiv) return false;
+
+      const firstHl = textLayerDiv.querySelector(
+        ".highlight",
+      ) as HTMLElement | null;
+      if (!firstHl) return false;
+
+      const tlRect = textLayerDiv.getBoundingClientRect();
+      const hlRect = firstHl.getBoundingClientRect();
+      if (tlRect.width <= 0 || tlRect.height <= 0) return false;
+
+      const scale = sourceCanvas.width / tlRect.width;
+      if (!isFinite(scale) || scale <= 0) return false;
+
+      const sy = (hlRect.top - tlRect.top) * scale;
+      const sh = hlRect.height * scale;
+
+      // 仿 Zotero 原生章节预览：横向取整页宽（不做窄裁切），
+      // 纵向以 first match 为中心截出一段，受 popup 最大高度约束。
+      const cropX = 0;
+      const cropW = sourceCanvas.width;
+
+      // 计算"整页等比缩放后"的高度。如果整页能塞进 max height，就显示整页；
+      // 否则按 max height 反推 native 像素尺寸，纵向以 match 为中心裁切。
+      const fitScaleByWidth = this.POPUP_MAX_WIDTH_PX / cropW;
+      const fullPageDisplayH = sourceCanvas.height * fitScaleByWidth;
+
+      let cropY: number;
+      let cropH: number;
+      if (fullPageDisplayH <= this.POPUP_MAX_HEIGHT_PX) {
+        cropY = 0;
+        cropH = sourceCanvas.height;
+      } else {
+        const cropHNative = this.POPUP_MAX_HEIGHT_PX / fitScaleByWidth;
+        const matchCenterY = sy + sh / 2;
+        const desiredTop = matchCenterY - cropHNative * this.VERTICAL_FOCUS_RATIO;
+        cropY = Math.max(
+          0,
+          Math.min(sourceCanvas.height - cropHNative, desiredTop),
+        );
+        cropH = cropHNative;
+      }
+      // 边界保护
+      if (!isFinite(cropY) || cropY < 0) cropY = 0;
+      if (!isFinite(cropH) || cropH <= 0) cropH = sourceCanvas.height;
+      cropH = Math.min(cropH, sourceCanvas.height - cropY);
+
+      let popupW = Math.max(1, Math.round(cropW * fitScaleByWidth));
+      let popupH = Math.max(1, Math.round(cropH * fitScaleByWidth));
+      const popupW_drawn = popupW;
+      const popupH_drawn = popupH;
+      if (popupW < this.POPUP_MIN_WIDTH_PX) {
+        popupW = this.POPUP_MIN_WIDTH_PX;
+      }
+
+      const popupCanvas = state.popupCanvas;
+      popupCanvas.width = popupW;
+      popupCanvas.height = popupH;
+
+      const ctx2d = popupCanvas.getContext(
+        "2d",
+      ) as CanvasRenderingContext2D | null;
+      if (!ctx2d) return false;
+
+      ctx2d.fillStyle = "#fafafa";
+      ctx2d.fillRect(0, 0, popupW, popupH);
+      const offsetX = Math.max(0, Math.round((popupW - popupW_drawn) / 2));
+      try {
+        ctx2d.drawImage(
+          sourceCanvas,
+          cropX,
+          cropY,
+          cropW,
+          cropH,
+          offsetX,
+          0,
+          popupW_drawn,
+          popupH_drawn,
+        );
+      } catch (e) {
+        this.log(`drawImage failed: ${String(e)}`);
+        return false;
+      }
+
+      try {
+        state.popupHeader.textContent = `Page ${state.ctx.pageIdx + 1} · "${state.ctx.query}"`;
+      } catch {
+        /* ignore */
+      }
+      return true;
     } catch (e) {
-      this.log(`drawImage failed: ${String(e)}`);
+      this.log(`drawPreviewFromViewer EXCEPTION: ${String(e)}`);
       return false;
     }
-
-    state.popupHeader.textContent = `Page ${state.ctx.pageIdx + 1} · "${state.ctx.query}"`;
-    return true;
   }
 
   private static positionPopup(
@@ -513,39 +610,85 @@ export class HoverPreview {
     mouseX: number,
     mouseY: number,
   ) {
-    const docEl = state.iframeDoc.documentElement;
-    const viewportW = docEl?.clientWidth ?? state.iframeWin.innerWidth ?? 800;
-    const viewportH = docEl?.clientHeight ?? state.iframeWin.innerHeight ?? 600;
+    try {
+      const docEl = state.innerDoc.documentElement;
+      const viewportW =
+        docEl?.clientWidth ?? state.innerWin.innerWidth ?? 800;
+      const viewportH =
+        docEl?.clientHeight ?? state.innerWin.innerHeight ?? 600;
 
-    const popupW = state.popupEl.offsetWidth || this.POPUP_WIDTH_PX;
-    const popupH = state.popupEl.offsetHeight || this.POPUP_MAX_HEIGHT_PX;
+      const popupW = state.popupEl.offsetWidth || this.POPUP_MAX_WIDTH_PX;
+      const popupH = state.popupEl.offsetHeight || this.POPUP_MAX_HEIGHT_PX;
 
-    let left = mouseX + 16;
-    let top = mouseY + 16;
+      let left = mouseX + 16;
+      let top = mouseY + 16;
 
-    if (left + popupW > viewportW - 8) {
-      left = Math.max(8, mouseX - popupW - 16);
+      if (left + popupW > viewportW - 8) {
+        left = Math.max(8, mouseX - popupW - 16);
+      }
+      if (top + popupH > viewportH - 8) {
+        top = Math.max(8, mouseY - popupH - 16);
+      }
+
+      state.popupEl.style.left = `${Math.round(left)}px`;
+      state.popupEl.style.top = `${Math.round(top)}px`;
+    } catch (e) {
+      this.log(`positionPopup failed: ${String(e)}`);
     }
-    if (top + popupH > viewportH - 8) {
-      top = Math.max(8, mouseY - popupH - 16);
-    }
-
-    state.popupEl.style.left = `${Math.round(left)}px`;
-    state.popupEl.style.top = `${Math.round(top)}px`;
   }
 
-  private static getApp(state: ReaderState): any {
+  /**
+   * 通过 reader._iframeWindow 桥接到 PDFViewerApplication。
+   * 注意：这里只用 outer window，因为 PDFViewerApplication 暴露在 outer iframe 上；
+   * 真正的 viewer DOM 在内层 iframe，由 getPdfInnerDoc 解析。
+   */
+  private static getAppFromOuter(outerWin: any): any {
     try {
-      const w = state.iframeWin?.wrappedJSObject ?? state.iframeWin ?? null;
+      const w = outerWin?.wrappedJSObject ?? outerWin ?? null;
       return w?.PDFViewerApplication ?? null;
     } catch {
       return null;
     }
   }
 
+  /**
+   * 解析内层 PDF.js viewer document（承载 .textLayer / .highlight / page canvas）。
+   * 与 highlighter.ts:375-406 getPdfDoc 同等链路。
+   */
+  private static getPdfInnerDoc(app: any, reader: Reader): Document | null {
+    try {
+      const fromContainer = app?.pdfViewer?.container?.ownerDocument;
+      if (fromContainer) return fromContainer as Document;
+    } catch {
+      /* ignore */
+    }
+    try {
+      const fromViewerEl = app?.pdfViewer?.viewer?.ownerDocument;
+      if (fromViewerEl) return fromViewerEl as Document;
+    } catch {
+      /* ignore */
+    }
+    try {
+      const fromAppConfig = app?.appConfig?.mainContainer?.ownerDocument;
+      if (fromAppConfig) return fromAppConfig as Document;
+    } catch {
+      /* ignore */
+    }
+    try {
+      const firstPage = app?.pdfViewer?._pages?.[0];
+      const fromPage =
+        firstPage?.div?.ownerDocument ??
+        firstPage?.textLayer?.div?.ownerDocument;
+      if (fromPage) return fromPage as Document;
+    } catch {
+      /* ignore */
+    }
+    return reader?._iframeWindow?.document ?? null;
+  }
+
   private static getScrollContainer(state: ReaderState): HTMLElement | null {
     try {
-      const app = this.getApp(state);
+      const app = this.getAppFromOuter(state.outerWin);
       return (
         app?.pdfViewer?.container ??
         app?.appConfig?.mainContainer ??
