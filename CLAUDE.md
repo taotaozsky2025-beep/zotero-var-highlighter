@@ -170,3 +170,57 @@ npm run release  # 创建发布版本
 - **`wheel` / `keydown` 在 Zotero reader 中收不到** —— 哪怕 capture phase + iframe window 级监听都无效，原因不明（疑似 XUL 嵌套结构）。不要把"用户输入信号"作为解锁依据。
 - **`npm start` 热重载多次后会静默失效** —— bundle 编译成功、`Last extension reload` 日志正常，但事件 handler 完全不触发。怀疑代码不生效时，第一步是在 `activate()` 和 handler 入口加强制 `Zotero.ProgressWindow` 弹版本号，肉眼确认。彻底验证需 kill `zotero.exe` 让 dev server 冷启动。
 - **`onShutdown` 默认是空的，没调用 `Highlighter.deactivate()`** —— 旧 handler 不会被 unregister，热重载累积是失效根因之一。
+
+---
+
+## Hover Preview 实现（v0.2.0）
+
+### 功能概述
+
+用户鼠标悬停在任一高亮匹配（非首匹配绿色）≥350ms，弹出浮窗显示该匹配首次出现处的页面预览。类似 Zotero 原生的"章节预览"或"链接预览"。
+
+### 核心设计
+
+**根本问题**：Zotero reader 的 iframe 是**嵌套的**：
+- 外层 `reader._iframeWindow`（暴露 `PDFViewerApplication`）
+- 内层 PDF.js viewer.html（真正承载 `.textLayer`、`.highlight`、page canvas）
+
+之前的实现误用外层 doc，导致 popup 注入错位、mouseover 监听无效、`drawImage(pageCanvas, …)` 跨 realm 崩溃。
+
+**修复方案**（`src/modules/hover-preview.ts`）：
+
+| 步骤 | 实现 |
+|---|---|
+| 1. 定位内层 doc | `getPdfInnerDoc(app, reader)` —— 链式尝试 `pdfViewer.container.ownerDocument` / `viewer.ownerDocument` / `appConfig.mainContainer.ownerDocument` / `_pages[0].div.ownerDocument`，最后兜底 `reader._iframeWindow.document` |
+| 2. 所有 DOM 操作在内层 doc 执行 | popup `<div>` / `<canvas>` 创建、style 注入、`mouseover/mouseout` listener、`scroll/resize` listener 均使用 `innerDoc` |
+| 3. 等比缩放渲染 | 横向取整页宽（不做窄裁切），纵向以首匹配为中心（上 40% / 下 60%）截出一段段；缩放到 popup max（560×680），绝不非等比拉伸 |
+| 4. 防御式访问 | 每次 hover 重新解析 app、pageView、canvas，不缓存；每个 PDF.js 访问点单独 try/catch |
+| 5. 生命周期注册 | `hooks.ts` 中 `onStartup` 调 `HoverPreview.activate()`，`onShutdown` 调 `deactivate()`；Highlighter 在 `onFindCommitted`/`onFindCleared` 时回调 HoverPreview |
+
+### 集成点
+
+- [src/modules/hover-preview.ts](src/modules/hover-preview.ts) —— 完整实现
+- [src/modules/highlighter.ts:57](src/modules/highlighter.ts#L57) —— `ENABLE_HOVER_PREVIEW = true` 开启功能
+- [src/modules/highlighter.ts:172](src/modules/highlighter.ts#L172) —— 新选中时 `HoverPreview.onFindCleared(reader)`
+- [src/modules/highlighter.ts:1244](src/modules/highlighter.ts#L1244) —— find 稳定后 `HoverPreview.onFindCommitted(reader, ctx)`
+- [src/hooks.ts:26,71](src/hooks.ts#L26) —— `HoverPreview.activate()` / `deactivate()`
+
+### 常量配置
+
+| 常量 | 值 | 用途 |
+|---|---|---|
+| `HOVER_DELAY_MS` | 350 | 悬停多久后显示 popup |
+| `REENTRY_GRACE_MS` | 120 | 离开后多久真正隐藏（容纳快速移动） |
+| `POPUP_MAX_WIDTH_PX` | 560 | popup 最大宽 |
+| `POPUP_MAX_HEIGHT_PX` | 680 | popup 最大高 |
+| `POPUP_MIN_WIDTH_PX` | 280 | popup 最小宽（极端窄文本时) |
+| `VERTICAL_FOCUS_RATIO` | 0.4 | 纵向裁切时 match 上方占比 |
+
+### 测试检查清单
+
+1. **冷启动**（绝不用热重载）：关闭 Zotero，重装 XPI，重启
+2. **基线回归**：选变量 → 全文首处绿色、其他处橙色
+3. **核心功能**：鼠标停在橙色高亮 ≥350ms → popup 显示首处所在页的完整宽、中等高的截图
+4. **排除首匹配**：鼠标停在绿色（首匹配）高亮 → 不弹 popup
+5. **压力**：popup 显示中，scroll / 缩放 / 切文档 / 关闭 reader → 无闪退、popup 干净消失
+6. **日志**：Zotero debug console 搜 `[zotero-var-highlighter:hover]` → 仅正常日志，无 EXCEPTION
