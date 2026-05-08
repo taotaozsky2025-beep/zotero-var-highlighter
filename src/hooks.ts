@@ -1,4 +1,5 @@
 import { Highlighter } from "./modules/highlighter";
+import { HoverPreview } from "./modules/hover-preview";
 import { config } from "../package.json";
 
 async function onStartup() {
@@ -19,6 +20,13 @@ async function onStartup() {
     Zotero.debug(`[${config.addonName}] Highlighter activated`);
   } catch (e) {
     Zotero.debug(`[${config.addonName}] ERROR activating Highlighter: ${e}`);
+  }
+  try {
+    // @ts-expect-error
+    HoverPreview.activate(Zotero[config.addonInstance]);
+    Zotero.debug(`[${config.addonName}] HoverPreview activated`);
+  } catch (e) {
+    Zotero.debug(`[${config.addonName}] ERROR activating HoverPreview: ${e}`);
   }
   const mainWindow = Zotero.getMainWindow();
   Zotero.debug(
@@ -53,7 +61,18 @@ async function onMainWindowLoad(win: _ZoteroTypes.MainWindow): Promise<void> {
 
 async function onMainWindowUnload(win: Window): Promise<void> {}
 
-function onShutdown(): void {}
+function onShutdown(): void {
+  try {
+    Highlighter.deactivate();
+  } catch (e) {
+    Zotero.debug(`[${config.addonName}] ERROR Highlighter.deactivate: ${e}`);
+  }
+  try {
+    HoverPreview.deactivate();
+  } catch (e) {
+    Zotero.debug(`[${config.addonName}] ERROR HoverPreview.deactivate: ${e}`);
+  }
+}
 
 async function onNotify(
   event: string,
