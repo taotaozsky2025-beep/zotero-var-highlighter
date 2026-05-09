@@ -10,7 +10,7 @@ pref("hoverFirstOpacity", 55);
 pref("hoverOtherColor", "#ff9e00");
 pref("hoverOtherOpacity", 45);
 
-pref("previewMaxWidth", 560);
-pref("previewMaxHeight", 680);
+pref("previewMaxWidth", 800);
+pref("previewMaxHeight", 500);
 pref("hoverDelayMs", 350);
 pref("verticalFocusRatio", 40);
