@@ -133,12 +133,18 @@ export class Highlighter {
    *
    * warm-up 完成后写入 WeakSet，后续 selection 直接走快路径不再等。
    */
-  private static async ensureReaderWarm(app: any, reader: Reader): Promise<void> {
+  private static async ensureReaderWarm(
+    app: any,
+    reader: Reader,
+  ): Promise<boolean> {
+    let isFirstTime: boolean;
     try {
-      if (this.warmedReaders.has(reader as object)) return;
+      isFirstTime = !this.warmedReaders.has(reader as object);
     } catch {
-      /* WeakSet 失败时降级：每次都等一遍，影响不大 */
+      // WeakSet 失败时降级：每次都按"第一次"处理（多等一会无伤大雅）
+      isFirstTime = true;
     }
+    if (!isFirstTime) return false;
 
     try {
       const initP = app?.initializedPromise;
@@ -164,6 +170,7 @@ export class Highlighter {
     } catch {
       /* ignore */
     }
+    return true;
   }
 
   public static activate(addon: any) {
@@ -304,8 +311,9 @@ export class Highlighter {
     this.lastMarkerAppliedPageIdx = -1;
 
     // 冷启动 warm-up：第一次跑这个 reader 时等 PDF.js 真正就绪，
-    // 否则 scrollTop 读到 0、内层 doc 拿不到，引发"页面乱跳 + hover 不响应"
-    await this.ensureReaderWarm(app, reader);
+    // 否则 scrollTop 读到 0、内层 doc 拿不到，引发"页面乱跳 + hover 不响应"。
+    // 返回值告诉我们这次是不是该 reader 的"第一次 selection"。
+    const wasFirstSelection = await this.ensureReaderWarm(app, reader);
 
     this.prepareReaderHighlightStyles(reader, app);
 
@@ -317,6 +325,9 @@ export class Highlighter {
     // 此时 lockScroll 会把 PDF.js 后续 scroll 全锁成 0，反而引发"页面被拉回顶部"。
     // 直接跳过本次 lock，让 PDF.js 自己处理。
     const scrollLooksUnstable = currentPage > 1 && initialScrollTop === 0;
+    // 第一次选词时 PDF.js 内部 scrollIntoView helper 常在 300ms 之后才触发；
+    // 把 setter 锁延长到 1800ms 兜住整个冷启动 scroll 窗口。后续 selection 用默认 300ms。
+    const setterLockMs = wasFirstSelection ? 1800 : 300;
     let unlock: (() => void) | null = null;
     if (this.PREVENT_SCROLL && !scrollLooksUnstable) {
       unlock = this.lockScroll(
@@ -324,6 +335,7 @@ export class Highlighter {
         this.SCROLL_LOCK_MS,
         initialScrollTop,
         initialScrollLeft,
+        setterLockMs,
       );
       this.scrollUnlock = unlock;
       if (unlock) {
@@ -333,7 +345,9 @@ export class Highlighter {
       }
       this.popup(
         "lockScroll()",
-        unlock ? `OK ${this.SCROLL_LOCK_MS}ms` : "FAILED",
+        unlock
+          ? `OK methods=${this.SCROLL_LOCK_MS}ms setter=${setterLockMs}ms first=${wasFirstSelection}`
+          : "FAILED",
         1800,
       );
     } else if (scrollLooksUnstable) {
@@ -561,6 +575,7 @@ export class Highlighter {
     durationMs: number,
     initialScrollTop: number,
     initialScrollLeft: number,
+    setterLockMs: number = 300,
   ): (() => void) | null {
     try {
       const container =
@@ -663,8 +678,9 @@ export class Highlighter {
         /* ignore */
       }
 
-      // setter 拦截只保持短窗口（覆盖 PDF.js 异步跳动），之后立即释放让用户正常滚动
-      const SETTER_LOCK_MS = 300;
+      // setter 拦截只保持短窗口（覆盖 PDF.js 异步跳动），之后立即释放让用户正常滚动。
+      // 冷启动场景下 PDF.js 内部 scrollIntoView helper 经常在默认 300ms 之后才触发，
+      // 所以 caller 可以传更长的 setterLockMs 兜住整个冷启动 scroll 窗口。
       setTimeout(() => {
         scrollTopLocked = false;
         scrollLeftLocked = false;
@@ -678,7 +694,7 @@ export class Highlighter {
         } catch {
           /* ignore */
         }
-      }, SETTER_LOCK_MS);
+      }, setterLockMs);
 
       // 3) 方法 patch 在 durationMs 后恢复（覆盖整个搜索过程，阻止 PDF.js 主动跳页）
       let methodPatchActive = true;
