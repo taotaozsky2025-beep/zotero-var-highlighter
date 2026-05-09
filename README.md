@@ -4,7 +4,7 @@
 [![version](https://img.shields.io/badge/version-0.2.0-blue?style=flat-square)](https://github.com/taotaozsky2025-beep/zotero-var-highlighter/releases/latest)
 [![Using Zotero Var Highlighter](https://img.shields.io/badge/Using-Zotero%20Plugin%20Template-blue?style=flat-square&logo=github)](https://github.com/windingwind/zotero-plugin-template)
 
-[简体中文](doc/README-zhCN.md)
+[Chinese Version 简体中文](doc/README-zhCN.md)
 
 ---
 
@@ -45,6 +45,12 @@ Open **Zotero → Settings → Zotero Var Highlighter** to adjust:
 | Preview max width | Maximum width of the hover preview popup (px) | 800 |
 | Preview max height | Maximum height of the hover preview popup (px) | 500 |
 | Hover delay | Time to hover before the preview appears (ms) | 350 |
+
+## Screenshot
+
+![Zotero Var Highlighter in action](image.png)
+
+*Green highlight marks the first occurrence (variable definition); orange highlights mark all other occurrences.*
 
 ## Compatibility
 
