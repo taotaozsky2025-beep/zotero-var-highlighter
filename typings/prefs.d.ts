@@ -8,7 +8,19 @@ declare namespace _ZoteroTypes {
   interface Prefs {
     PluginPrefsMap: {
       "enable": boolean;
-      "input": string;
+      "developerMode": boolean;
+      "firstMatchColor": string;
+      "firstMatchOpacity": number;
+      "otherMatchColor": string;
+      "otherMatchOpacity": number;
+      "hoverFirstColor": string;
+      "hoverFirstOpacity": number;
+      "hoverOtherColor": string;
+      "hoverOtherOpacity": number;
+      "previewMaxWidth": number;
+      "previewMaxHeight": number;
+      "hoverDelayMs": number;
+      "verticalFocusRatio": number;
     };
   }
 }

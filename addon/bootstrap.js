@@ -68,6 +68,23 @@ async function startup({ id, version, resourceURI, rootURI }, reason) {
       Zotero.logError(e);
     } catch (_) {}
   }
+
+  // 注册 Zotero 7 设置面板。Zotero 不会自动发现 preferences.xhtml，
+  // 必须显式 register 才能在 设置 → 插件名 出现配置入口。
+  try {
+    if (Zotero.PreferencePanes && Zotero.PreferencePanes.register) {
+      await Zotero.PreferencePanes.register({
+        pluginID: "__addonID__",
+        src: rootURI + "content/preferences.xhtml",
+        label: "__addonName__",
+        image: rootURI + "content/icons/favicon.png",
+      });
+    }
+  } catch (e) {
+    try {
+      Zotero.logError(e);
+    } catch (_) {}
+  }
 }
 
 async function onMainWindowLoad({ window }, reason) {

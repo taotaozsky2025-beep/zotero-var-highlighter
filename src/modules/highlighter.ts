@@ -1,6 +1,13 @@
 import { HoverPreview } from "./hover-preview";
+import { hexToRgba, darkenHex, readPrefSafe } from "../utils/colors";
 
 type Reader = any;
+
+const DEFAULT_FIRST_MATCH_COLOR = "#00b450";
+const DEFAULT_FIRST_MATCH_OPACITY = 55;
+const DEFAULT_OTHER_MATCH_COLOR = "#ff9e00";
+const DEFAULT_OTHER_MATCH_OPACITY = 45;
+
 
 type RenderTextSelectionPopupEvent = {
   reader?: Reader;
@@ -18,17 +25,14 @@ export class Highlighter {
   // 版本指纹：用来确认你运行的就是这份文件
   private static readonly TAG = "ZVH-highlighter-2026-05-07-r16";
 
-  // Debug
-  private static readonly DEBUG_POPUP = false;
+  // Debug —— DEBUG_POPUP / DIAGNOSE_FIRST_MATCH 由 developerMode pref 动态驱动
+  private static get DEBUG_POPUP(): boolean {
+    return readPrefSafe<boolean>("developerMode", false);
+  }
+  private static get DIAGNOSE_FIRST_MATCH(): boolean {
+    return readPrefSafe<boolean>("developerMode", false);
+  }
   private static readonly VERBOSE_ON_EARLY_RETURN = true;
-  // 诊断 first-match 选页逻辑：开启后，每次选中文本会在 dispatch find
-  // 之后约 2.5 秒弹出一个 ProgressWindow，里面只显示我们最关心的几个数：
-  // - currentPage：你选词时所在的页（1-based）
-  // - chosenPageIdx：getGlobalFirstMatchPageIdx 实际返回的"全文第一个" pageIdx（0-based）
-  // - markerPageIdx：marker 实际成功 add class 的 pageIdx（-1 表示未应用）
-  // - per-page 简表：前 N 页的 pageMatches 长度 / pageContents 是否就绪
-  // 拍下这个弹窗的截图发我，就能定位是匹配逻辑错还是 DOM 应用错。
-  private static readonly DIAGNOSE_FIRST_MATCH = true;
   private static readonly DIAGNOSE_DELAY_MS = 2500;
   private static readonly DIAGNOSE_PAGES_TO_DUMP = 12;
 
@@ -135,6 +139,7 @@ export class Highlighter {
     this.detachContinuousForceFirst();
     this.releaseScrollLock();
     this.clearFirstMatchMarker();
+    this.unregisterPrefObservers();
     Zotero.Reader.unregisterEventListener(
       "renderTextSelectionPopup",
       this.handler,
@@ -150,6 +155,10 @@ export class Highlighter {
   private static async onRenderTextSelectionPopup(
     evt: RenderTextSelectionPopupEvent,
   ) {
+    if (!readPrefSafe<boolean>("enable", true)) {
+      return;
+    }
+
     this.popup("renderTextSelectionPopup FIRED", `tag=${this.TAG}`);
 
     const reader = evt?.reader;
@@ -886,26 +895,89 @@ export class Highlighter {
     }
   }
 
+  // 数据属性，用于标记 .textLayer .highlight 的 "非首匹配" 颜色覆盖样式表
+  private static readonly OTHER_MATCH_STYLE_ATTR =
+    "data-zvh-other-match-style";
+
+  // 收集所有曾经注入过样式的内层 doc，pref 改变时遍历重注入。
+  // 用 WeakRef 数组 + 周期性清理，避免持有 doc 强引用导致泄漏。
+  private static injectedDocs: WeakRef<Document>[] = [];
+  private static prefObserverIDs: any[] = [];
+
+  private static rememberInjectedDoc(doc: Document) {
+    try {
+      for (const ref of this.injectedDocs) {
+        if (ref.deref() === doc) return;
+      }
+      this.injectedDocs.push(new WeakRef(doc));
+      // 顺手清掉已被 GC 的 ref
+      this.injectedDocs = this.injectedDocs.filter((r) => r.deref());
+    } catch {
+      /* WeakRef 不可用时忽略 */
+    }
+  }
+
   private static injectHighlightStyles(doc: Document) {
     this.injectSuppressSelectedStyle(doc);
     this.injectFirstMatchStyle(doc);
+    this.injectOtherMatchStyle(doc);
+    this.rememberInjectedDoc(doc);
+  }
+
+  private static getFirstMatchRgba(): {
+    bg: string;
+    outline: string;
+  } {
+    const color = readPrefSafe<string>(
+      "firstMatchColor",
+      DEFAULT_FIRST_MATCH_COLOR,
+    );
+    const opacity = readPrefSafe<number>(
+      "firstMatchOpacity",
+      DEFAULT_FIRST_MATCH_OPACITY,
+    );
+    return {
+      bg: hexToRgba(color, opacity),
+      outline: darkenHex(color),
+    };
+  }
+
+  private static getOtherMatchRgba(): string {
+    const color = readPrefSafe<string>(
+      "otherMatchColor",
+      DEFAULT_OTHER_MATCH_COLOR,
+    );
+    const opacity = readPrefSafe<number>(
+      "otherMatchOpacity",
+      DEFAULT_OTHER_MATCH_OPACITY,
+    );
+    return hexToRgba(color, opacity);
+  }
+
+  private static removeStyleByAttr(doc: Document, attr: string) {
+    try {
+      for (const el of Array.from(
+        doc.querySelectorAll(`style[${attr}]`),
+      ) as Element[]) {
+        el.parentElement?.removeChild(el);
+      }
+    } catch {
+      /* ignore */
+    }
   }
 
   private static injectSuppressSelectedStyle(doc: Document) {
-    if (
-      doc.head?.querySelector(`style[${this.SUPPRESS_SELECTED_STYLE_ATTR}]`)
-    ) {
-      return;
-    }
+    this.removeStyleByAttr(doc, this.SUPPRESS_SELECTED_STYLE_ATTR);
 
     // 现在 CSS 已经注入到 PDF.js viewer 真正的 document 里，可以做最小化
     // 的样式覆盖：
-    //  - 普通 .highlight（非 .selected、非我们的 marker）：完全保留 PDF.js
-    //    默认颜色（橙/黄），不去动。
+    //  - 普通 .highlight（非 .selected、非我们的 marker）：颜色由
+    //    injectOtherMatchStyle 控制（用户可配）。
     //  - .highlight.selected （PDF.js 自己选中的"当前匹配"，默认深绿色）：
     //    如果它不是我们的 marker，强制回退到普通 highlight 颜色，避免被
     //    误以为是"全文第一个"。
-    //  - .highlight.${this.FIRST_MARK_CLASS}（我们标的全文第一个）：绿色。
+    //  - .highlight.${this.FIRST_MARK_CLASS}（我们标的全文第一个）：用户可配。
+    const { bg: firstBg, outline: firstOutline } = this.getFirstMatchRgba();
     const style = doc.createElement("style");
     style.setAttribute(this.SUPPRESS_SELECTED_STYLE_ATTR, "1");
     style.textContent = `
@@ -921,13 +993,13 @@ export class Highlighter {
 .textLayer .highlight.${this.FIRST_MARK_CLASS}.selected,
 .textLayer .highlight.${this.FIRST_MARK_CLASS}.appended,
 .textLayer .highlight.${this.FIRST_MARK_CLASS}.appended.selected {
-  --highlight-bg-color: rgba(0, 180, 80, 0.55) !important;
-  --highlight-selected-bg-color: rgba(0, 180, 80, 0.55) !important;
-  --find-highlight-bg-color: rgba(0, 180, 80, 0.55) !important;
-  --find-highlight-selected-bg-color: rgba(0, 180, 80, 0.55) !important;
-  background: rgba(0, 180, 80, 0.55) !important;
-  background-color: rgba(0, 180, 80, 0.55) !important;
-  outline: 1px solid rgba(0, 120, 55, 0.75) !important;
+  --highlight-bg-color: ${firstBg} !important;
+  --highlight-selected-bg-color: ${firstBg} !important;
+  --find-highlight-bg-color: ${firstBg} !important;
+  --find-highlight-selected-bg-color: ${firstBg} !important;
+  background: ${firstBg} !important;
+  background-color: ${firstBg} !important;
+  outline: 1px solid ${firstOutline} !important;
 }
 `;
     const host = doc.head ?? doc.documentElement;
@@ -935,18 +1007,105 @@ export class Highlighter {
   }
 
   private static injectFirstMatchStyle(doc: Document) {
-    if (doc.head?.querySelector(`style[${this.FIRST_MARK_STYLE_ATTR}]`)) return;
+    this.removeStyleByAttr(doc, this.FIRST_MARK_STYLE_ATTR);
 
+    const { bg, outline } = this.getFirstMatchRgba();
     const style = doc.createElement("style");
     style.setAttribute(this.FIRST_MARK_STYLE_ATTR, "1");
     style.textContent = `
 .textLayer .highlight.${this.FIRST_MARK_CLASS} {
-  background-color: rgba(0, 180, 80, 0.55) !important;
-  outline: 1px solid rgba(0, 120, 55, 0.75) !important;
+  background-color: ${bg} !important;
+  outline: 1px solid ${outline} !important;
 }
 `;
     const host = doc.head ?? doc.documentElement;
     host?.appendChild(style);
+  }
+
+  // 覆盖 PDF.js 默认的非首匹配（橙/黄）颜色。
+  // 用 :not(.zvh-global-first-match) 自动避开首匹配。
+  private static injectOtherMatchStyle(doc: Document) {
+    this.removeStyleByAttr(doc, this.OTHER_MATCH_STYLE_ATTR);
+
+    const bg = this.getOtherMatchRgba();
+    const style = doc.createElement("style");
+    style.setAttribute(this.OTHER_MATCH_STYLE_ATTR, "1");
+    style.textContent = `
+.textLayer .highlight:not(.${this.FIRST_MARK_CLASS}) {
+  --highlight-bg-color: ${bg} !important;
+  --find-highlight-bg-color: ${bg} !important;
+  background-color: ${bg} !important;
+  background: ${bg} !important;
+}
+`;
+    const host = doc.head ?? doc.documentElement;
+    host?.appendChild(style);
+  }
+
+  /**
+   * 当颜色相关 pref 改变时，遍历所有曾经注入过样式的内层 doc，移除并重注入。
+   * 已存在的 .highlight DOM 不需要动；CSS 替换后会立刻反映新颜色。
+   */
+  public static refreshAllInjectedStyles() {
+    const live: WeakRef<Document>[] = [];
+    for (const ref of this.injectedDocs) {
+      const doc = ref.deref();
+      if (!doc) continue;
+      try {
+        // doc 仍连接到 viewer：head/body 还在
+        if (!doc.head && !doc.documentElement) continue;
+        this.injectSuppressSelectedStyle(doc);
+        this.injectFirstMatchStyle(doc);
+        this.injectOtherMatchStyle(doc);
+        live.push(ref);
+      } catch (e) {
+        this.log(`refreshAllInjectedStyles per-doc failed: ${String(e)}`);
+      }
+    }
+    this.injectedDocs = live;
+  }
+
+  /**
+   * 注册 pref 观察者，颜色 / 不透明度 pref 改变时自动重注入 CSS。
+   * 在 hooks.ts onStartup 调用一次即可。
+   */
+  public static registerPrefObservers() {
+    this.unregisterPrefObservers();
+    const colorKeys = [
+      "firstMatchColor",
+      "firstMatchOpacity",
+      "otherMatchColor",
+      "otherMatchOpacity",
+    ];
+    for (const key of colorKeys) {
+      try {
+        const id = (Zotero.Prefs as any).registerObserver(
+          `extensions.zotero.zotero-var-highlighter.${key}`,
+          () => {
+            try {
+              this.refreshAllInjectedStyles();
+            } catch (e) {
+              this.log(`pref observer callback failed: ${String(e)}`);
+            }
+          },
+          true,
+        );
+        this.prefObserverIDs.push(id);
+      } catch (e) {
+        this.log(`registerPrefObservers failed for ${key}: ${String(e)}`);
+      }
+    }
+  }
+
+  public static unregisterPrefObservers() {
+    for (const id of this.prefObserverIDs) {
+      try {
+        (Zotero.Prefs as any).unregisterObserver(id);
+      } catch {
+        /* ignore */
+      }
+    }
+    this.prefObserverIDs = [];
   }
 
   // 检查我们的 marker class 是否还贴在指定 pageIdx 的 textLayer 里。
