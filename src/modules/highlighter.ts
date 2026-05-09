@@ -1,18 +1,19 @@
 import { HoverPreview } from "./hover-preview";
+import { hexToRgba, darkenHex, readPrefSafe } from "../utils/colors";
 
 type Reader = any;
+
+const DEFAULT_FIRST_MATCH_COLOR = "#00b450";
+const DEFAULT_FIRST_MATCH_OPACITY = 55;
+const DEFAULT_OTHER_MATCH_COLOR = "#ff9e00";
+const DEFAULT_OTHER_MATCH_OPACITY = 45;
+
 
 type RenderTextSelectionPopupEvent = {
   reader?: Reader;
   doc?: Document;
   params?: any;
   append?: (node: Node) => void;
-};
-
-type ScrollSnapshot = {
-  scrollTop: number;
-  scrollLeft: number;
-  pageNumber?: number;
 };
 
 type GlobalFirstMatchResult = {
@@ -24,17 +25,14 @@ export class Highlighter {
   // 版本指纹：用来确认你运行的就是这份文件
   private static readonly TAG = "ZVH-highlighter-2026-05-07-r16";
 
-  // Debug
-  private static readonly DEBUG_POPUP = false;
+  // Debug —— DEBUG_POPUP / DIAGNOSE_FIRST_MATCH 由 developerMode pref 动态驱动
+  private static get DEBUG_POPUP(): boolean {
+    return readPrefSafe<boolean>("developerMode", false);
+  }
+  private static get DIAGNOSE_FIRST_MATCH(): boolean {
+    return readPrefSafe<boolean>("developerMode", false);
+  }
   private static readonly VERBOSE_ON_EARLY_RETURN = true;
-  // 诊断 first-match 选页逻辑：开启后，每次选中文本会在 dispatch find
-  // 之后约 2.5 秒弹出一个 ProgressWindow，里面只显示我们最关心的几个数：
-  // - currentPage：你选词时所在的页（1-based）
-  // - chosenPageIdx：getGlobalFirstMatchPageIdx 实际返回的"全文第一个" pageIdx（0-based）
-  // - markerPageIdx：marker 实际成功 add class 的 pageIdx（-1 表示未应用）
-  // - per-page 简表：前 N 页的 pageMatches 长度 / pageContents 是否就绪
-  // 拍下这个弹窗的截图发我，就能定位是匹配逻辑错还是 DOM 应用错。
-  private static readonly DIAGNOSE_FIRST_MATCH = true;
   private static readonly DIAGNOSE_DELAY_MS = 2500;
   private static readonly DIAGNOSE_PAGES_TO_DUMP = 12;
 
@@ -47,7 +45,6 @@ export class Highlighter {
   // PDF.js 异步分页搜索可能耗时数秒，方法 patch 需覆盖整个搜索过程；
   // 这里不持续监听 scroll，只在触发 find 后做短窗口回位，避免拦截用户主动滚动。
   private static readonly SCROLL_LOCK_MS = 8000; // 滚动锁定/方法 patch 总时长（ms）
-  private static readonly HARD_SCROLL_RESTORE_MS = 1400;
   private static readonly AFTER_FIND_FORCE_FIRST_DELAY_MS = 200; // 初次强制首匹配的延迟（ms）
   private static readonly ENTIRE_WORD_FOR_SINGLE_ASCII = false;
   // 不再写 PDF.js 的 _selected/_offset 或调用 _updateMatch(true)；
@@ -73,6 +70,8 @@ export class Highlighter {
   private static lastPopupAt = 0;
   private static lastSelectionKey = "";
   private static lastSelectionAt = 0;
+  // 已完成冷启动 warm-up 的 reader 集合，避免每次 selection 都等
+  private static warmedReaders = new WeakSet<object>();
 
   private static addon: any;
   private static pluginID = "zotero-var-highlighter@local";
@@ -123,6 +122,57 @@ export class Highlighter {
     return new Promise<void>((resolve) => setTimeout(resolve, ms));
   }
 
+  /**
+   * 冷启动 warm-up：每个 reader 第一次走 selection 流程前等 PDF.js 完成核心初始化。
+   *
+   * 不做这一步的话：
+   *  - app.pdfViewer.container.scrollTop 可能还是初始 0，但用户实际看的是第 N 页，
+   *    后续 lockScroll 把 setter 锁成 0 → 页面被反复拉回顶部、看上去"乱跳"
+   *  - HoverPreview.getPdfInnerDoc 拿不到内层 doc → setupForReader 返回 null
+   *    → 第一次选词后 hover 不响应
+   *
+   * warm-up 完成后写入 WeakSet，后续 selection 直接走快路径不再等。
+   */
+  private static async ensureReaderWarm(
+    app: any,
+    reader: Reader,
+  ): Promise<boolean> {
+    let isFirstTime: boolean;
+    try {
+      isFirstTime = !this.warmedReaders.has(reader as object);
+    } catch {
+      // WeakSet 失败时降级：每次都按"第一次"处理（多等一会无伤大雅）
+      isFirstTime = true;
+    }
+    if (!isFirstTime) return false;
+
+    try {
+      const initP = app?.initializedPromise;
+      if (initP && typeof initP.then === "function") {
+        await Promise.race([initP, this.delay(2500)]);
+      }
+    } catch {
+      /* ignore */
+    }
+    try {
+      const pagesP = app?.pdfViewer?.pagesPromise;
+      if (pagesP && typeof pagesP.then === "function") {
+        await Promise.race([pagesP, this.delay(2500)]);
+      }
+    } catch {
+      /* ignore */
+    }
+    // 让 PDF.js 把当前页面 layout / scrollTop 真正写入 container
+    await this.delay(80);
+
+    try {
+      this.warmedReaders.add(reader as object);
+    } catch {
+      /* ignore */
+    }
+    return true;
+  }
+
   public static activate(addon: any) {
     this.addon = addon;
     this.pluginID = addon?.data?.config?.addonRef || addon?.id || this.pluginID;
@@ -142,6 +192,8 @@ export class Highlighter {
     this.detachContinuousForceFirst();
     this.releaseScrollLock();
     this.clearFirstMatchMarker();
+    this.unregisterPrefObservers();
+    this.warmedReaders = new WeakSet<object>();
     Zotero.Reader.unregisterEventListener(
       "renderTextSelectionPopup",
       this.handler,
@@ -157,6 +209,10 @@ export class Highlighter {
   private static async onRenderTextSelectionPopup(
     evt: RenderTextSelectionPopupEvent,
   ) {
+    if (!readPrefSafe<boolean>("enable", true)) {
+      return;
+    }
+
     this.popup("renderTextSelectionPopup FIRED", `tag=${this.TAG}`);
 
     const reader = evt?.reader;
@@ -253,21 +309,34 @@ export class Highlighter {
     this.releaseScrollLock();
     this.clearFirstMatchMarker();
     this.lastMarkerAppliedPageIdx = -1;
+
+    // 冷启动 warm-up：第一次跑这个 reader 时等 PDF.js 真正就绪，
+    // 否则 scrollTop 读到 0、内层 doc 拿不到，引发"页面乱跳 + hover 不响应"。
+    // 返回值告诉我们这次是不是该 reader 的"第一次 selection"。
+    const wasFirstSelection = await this.ensureReaderWarm(app, reader);
+
     this.prepareReaderHighlightStyles(reader, app);
 
-    // 3) 捕获视图 + 锁滚动（解决“自动滑动”）
-    const snap = this.captureScroll(app);
-    this.popup(
-      "captureScroll()",
-      snap
-        ? `top=${snap.scrollTop} left=${snap.scrollLeft} page=${snap.pageNumber ?? "?"}`
-        : "FAILED",
-      1800,
-    );
-
+    // 3) 捕获滚动位置 + 锁滚动（解决"自动滑动"）
+    const initialScrollTop = app?.pdfViewer?.container?.scrollTop ?? 0;
+    const initialScrollLeft = app?.pdfViewer?.container?.scrollLeft ?? 0;
+    const currentPage = Number(app?.pdfViewer?.currentPageNumber) || 1;
+    // 防御：warm-up 失败的极端情况下，currentPage>1 但 scrollTop=0 一定是 container 没就绪。
+    // 此时 lockScroll 会把 PDF.js 后续 scroll 全锁成 0，反而引发"页面被拉回顶部"。
+    // 直接跳过本次 lock，让 PDF.js 自己处理。
+    const scrollLooksUnstable = currentPage > 1 && initialScrollTop === 0;
+    // 第一次选词时 PDF.js 内部 scrollIntoView helper 常在 300ms 之后才触发；
+    // 把 setter 锁延长到 1800ms 兜住整个冷启动 scroll 窗口。后续 selection 用默认 300ms。
+    const setterLockMs = wasFirstSelection ? 1800 : 300;
     let unlock: (() => void) | null = null;
-    if (this.PREVENT_SCROLL && snap) {
-      unlock = this.lockScroll(app, snap, this.SCROLL_LOCK_MS);
+    if (this.PREVENT_SCROLL && !scrollLooksUnstable) {
+      unlock = this.lockScroll(
+        app,
+        this.SCROLL_LOCK_MS,
+        initialScrollTop,
+        initialScrollLeft,
+        setterLockMs,
+      );
       this.scrollUnlock = unlock;
       if (unlock) {
         setTimeout(() => {
@@ -276,8 +345,16 @@ export class Highlighter {
       }
       this.popup(
         "lockScroll()",
-        unlock ? `OK ${this.SCROLL_LOCK_MS}ms` : "FAILED",
+        unlock
+          ? `OK methods=${this.SCROLL_LOCK_MS}ms setter=${setterLockMs}ms first=${wasFirstSelection}`
+          : "FAILED",
         1800,
+      );
+    } else if (scrollLooksUnstable) {
+      this.popup(
+        "lockScroll() SKIP",
+        `cold-start guard: currentPage=${currentPage} scrollTop=0`,
+        2200,
       );
     }
 
@@ -489,39 +566,16 @@ export class Highlighter {
     }
   }
 
-  private static captureScroll(app: any): ScrollSnapshot | null {
-    try {
-      const container =
-        app?.pdfViewer?.container ??
-        app?.appConfig?.mainContainer ??
-        app?.appConfig?.viewerContainer ??
-        null;
-      if (!container) return null;
-
-      const pageNumber =
-        typeof app?.pdfViewer?.currentPageNumber === "number"
-          ? app.pdfViewer.currentPageNumber
-          : undefined;
-
-      return {
-        scrollTop: Number(container.scrollTop) || 0,
-        scrollLeft: Number(container.scrollLeft) || 0,
-        pageNumber,
-      };
-    } catch (e) {
-      this.log(`captureScroll failed: ${String(e)}`);
-      return null;
-    }
-  }
-
   /**
    * 短时间锁住滚动，阻止 PDF.js 在 find 后把 current match 滚动入视野。
    * PDF.js 的滚动通常来自 findController 的 scrollMatchIntoView / viewer 的 scrollPageIntoView 等路径。:contentReference[oaicite:1]{index=1}
    */
   private static lockScroll(
     app: any,
-    snap: ScrollSnapshot,
     durationMs: number,
+    initialScrollTop: number,
+    initialScrollLeft: number,
+    setterLockMs: number = 300,
   ): (() => void) | null {
     try {
       const container =
@@ -583,45 +637,64 @@ export class Highlighter {
         };
       }
 
-      // 2) 一次性回到 snap：仅在 0 / 50 / 150 ms 三个时点同步把视图拉回原位置，
-      //    覆盖 PDF.js 在 dispatch find 后立即/异步触发的极少数不走 method patch
-      //    的滚动路径。之后就完全不再监听/拦截 scroll，把控制权交还用户。
-      //    注意：此前版本曾用持续 scroll 事件回滚做“双保险”，但会拦截用户主动滚动，
-      //    用户感觉“被拉回”；wheel/keydown 信号在 Zotero reader 里不可靠（监听不到），
-      //    所以这里改为短窗口的脉冲式回滚 + 长期 method patch 的组合方案。
-      const restoreToSnap = () => {
-        try {
-          if (container.scrollTop !== snap.scrollTop)
-            container.scrollTop = snap.scrollTop;
-          if (container.scrollLeft !== snap.scrollLeft)
-            container.scrollLeft = snap.scrollLeft;
-        } catch {
-          /* ignore */
-        }
-      };
-      restoreToSnap();
-      for (const ms of [50, 150, 300, 600, 1000, 1400]) {
-        setTimeout(restoreToSnap, ms);
-      }
-
-      let hardRestoreActive = true;
-      const onScroll = () => {
-        if (!hardRestoreActive) return;
-        restoreToSnap();
-      };
+      // 2) 拦截 scrollTop/scrollLeft 的直接赋值。
+      //    PDF.js 内部 scrollIntoView() 工具函数直接写 parent.scrollTop，
+      //    绕过了所有 method patch；用 Object.defineProperty 封住 setter 是唯一出路。
+      //    通过 wrappedJSObject 拿到 iframe 内的真实 JS 对象再 defineProperty，
+      //    避免 Xray wrapper 的限制。
+      let scrollTopLocked = true;
+      let scrollLeftLocked = true;
+      const containerJs = (container as any).wrappedJSObject ?? container;
       try {
-        container.addEventListener("scroll", onScroll, { passive: true });
+        Object.defineProperty(containerJs, "scrollTop", {
+          get() {
+            return initialScrollTop;
+          },
+          set(_v: number) {
+            if (!scrollTopLocked) {
+              delete (this as any).scrollTop;
+              (this as any).scrollTop = _v;
+            }
+          },
+          configurable: true,
+        });
+      } catch {
+        /* 沙盒限制导致 defineProperty 失败时，退化为无保护 */
+      }
+      try {
+        Object.defineProperty(containerJs, "scrollLeft", {
+          get() {
+            return initialScrollLeft;
+          },
+          set(_v: number) {
+            if (!scrollLeftLocked) {
+              delete (this as any).scrollLeft;
+              (this as any).scrollLeft = _v;
+            }
+          },
+          configurable: true,
+        });
       } catch {
         /* ignore */
       }
+
+      // setter 拦截只保持短窗口（覆盖 PDF.js 异步跳动），之后立即释放让用户正常滚动。
+      // 冷启动场景下 PDF.js 内部 scrollIntoView helper 经常在默认 300ms 之后才触发，
+      // 所以 caller 可以传更长的 setterLockMs 兜住整个冷启动 scroll 窗口。
       setTimeout(() => {
-        hardRestoreActive = false;
+        scrollTopLocked = false;
+        scrollLeftLocked = false;
         try {
-          container.removeEventListener("scroll", onScroll);
+          delete (containerJs as any).scrollTop;
         } catch {
           /* ignore */
         }
-      }, this.HARD_SCROLL_RESTORE_MS);
+        try {
+          delete (containerJs as any).scrollLeft;
+        } catch {
+          /* ignore */
+        }
+      }, setterLockMs);
 
       // 3) 方法 patch 在 durationMs 后恢复（覆盖整个搜索过程，阻止 PDF.js 主动跳页）
       let methodPatchActive = true;
@@ -669,12 +742,6 @@ export class Highlighter {
           /* ignore */
         }
 
-        hardRestoreActive = false;
-        try {
-          container.removeEventListener("scroll", onScroll);
-        } catch {
-          /* ignore */
-        }
       };
 
       setTimeout(unlock, durationMs);
@@ -907,26 +974,89 @@ export class Highlighter {
     }
   }
 
+  // 数据属性，用于标记 .textLayer .highlight 的 "非首匹配" 颜色覆盖样式表
+  private static readonly OTHER_MATCH_STYLE_ATTR =
+    "data-zvh-other-match-style";
+
+  // 收集所有曾经注入过样式的内层 doc，pref 改变时遍历重注入。
+  // 用 WeakRef 数组 + 周期性清理，避免持有 doc 强引用导致泄漏。
+  private static injectedDocs: WeakRef<Document>[] = [];
+  private static prefObserverIDs: any[] = [];
+
+  private static rememberInjectedDoc(doc: Document) {
+    try {
+      for (const ref of this.injectedDocs) {
+        if (ref.deref() === doc) return;
+      }
+      this.injectedDocs.push(new WeakRef(doc));
+      // 顺手清掉已被 GC 的 ref
+      this.injectedDocs = this.injectedDocs.filter((r) => r.deref());
+    } catch {
+      /* WeakRef 不可用时忽略 */
+    }
+  }
+
   private static injectHighlightStyles(doc: Document) {
     this.injectSuppressSelectedStyle(doc);
     this.injectFirstMatchStyle(doc);
+    this.injectOtherMatchStyle(doc);
+    this.rememberInjectedDoc(doc);
+  }
+
+  private static getFirstMatchRgba(): {
+    bg: string;
+    outline: string;
+  } {
+    const color = readPrefSafe<string>(
+      "firstMatchColor",
+      DEFAULT_FIRST_MATCH_COLOR,
+    );
+    const opacity = readPrefSafe<number>(
+      "firstMatchOpacity",
+      DEFAULT_FIRST_MATCH_OPACITY,
+    );
+    return {
+      bg: hexToRgba(color, opacity),
+      outline: darkenHex(color),
+    };
+  }
+
+  private static getOtherMatchRgba(): string {
+    const color = readPrefSafe<string>(
+      "otherMatchColor",
+      DEFAULT_OTHER_MATCH_COLOR,
+    );
+    const opacity = readPrefSafe<number>(
+      "otherMatchOpacity",
+      DEFAULT_OTHER_MATCH_OPACITY,
+    );
+    return hexToRgba(color, opacity);
+  }
+
+  private static removeStyleByAttr(doc: Document, attr: string) {
+    try {
+      for (const el of Array.from(
+        doc.querySelectorAll(`style[${attr}]`),
+      ) as Element[]) {
+        el.parentElement?.removeChild(el);
+      }
+    } catch {
+      /* ignore */
+    }
   }
 
   private static injectSuppressSelectedStyle(doc: Document) {
-    if (
-      doc.head?.querySelector(`style[${this.SUPPRESS_SELECTED_STYLE_ATTR}]`)
-    ) {
-      return;
-    }
+    this.removeStyleByAttr(doc, this.SUPPRESS_SELECTED_STYLE_ATTR);
 
     // 现在 CSS 已经注入到 PDF.js viewer 真正的 document 里，可以做最小化
     // 的样式覆盖：
-    //  - 普通 .highlight（非 .selected、非我们的 marker）：完全保留 PDF.js
-    //    默认颜色（橙/黄），不去动。
+    //  - 普通 .highlight（非 .selected、非我们的 marker）：颜色由
+    //    injectOtherMatchStyle 控制（用户可配）。
     //  - .highlight.selected （PDF.js 自己选中的"当前匹配"，默认深绿色）：
     //    如果它不是我们的 marker，强制回退到普通 highlight 颜色，避免被
     //    误以为是"全文第一个"。
-    //  - .highlight.${this.FIRST_MARK_CLASS}（我们标的全文第一个）：绿色。
+    //  - .highlight.${this.FIRST_MARK_CLASS}（我们标的全文第一个）：用户可配。
+    const { bg: firstBg, outline: firstOutline } = this.getFirstMatchRgba();
     const style = doc.createElement("style");
     style.setAttribute(this.SUPPRESS_SELECTED_STYLE_ATTR, "1");
     style.textContent = `
@@ -942,13 +1072,13 @@ export class Highlighter {
 .textLayer .highlight.${this.FIRST_MARK_CLASS}.selected,
 .textLayer .highlight.${this.FIRST_MARK_CLASS}.appended,
 .textLayer .highlight.${this.FIRST_MARK_CLASS}.appended.selected {
-  --highlight-bg-color: rgba(0, 180, 80, 0.55) !important;
-  --highlight-selected-bg-color: rgba(0, 180, 80, 0.55) !important;
-  --find-highlight-bg-color: rgba(0, 180, 80, 0.55) !important;
-  --find-highlight-selected-bg-color: rgba(0, 180, 80, 0.55) !important;
-  background: rgba(0, 180, 80, 0.55) !important;
-  background-color: rgba(0, 180, 80, 0.55) !important;
-  outline: 1px solid rgba(0, 120, 55, 0.75) !important;
+  --highlight-bg-color: ${firstBg} !important;
+  --highlight-selected-bg-color: ${firstBg} !important;
+  --find-highlight-bg-color: ${firstBg} !important;
+  --find-highlight-selected-bg-color: ${firstBg} !important;
+  background: ${firstBg} !important;
+  background-color: ${firstBg} !important;
+  outline: 1px solid ${firstOutline} !important;
 }
 `;
     const host = doc.head ?? doc.documentElement;
@@ -956,18 +1086,105 @@ export class Highlighter {
   }
 
   private static injectFirstMatchStyle(doc: Document) {
-    if (doc.head?.querySelector(`style[${this.FIRST_MARK_STYLE_ATTR}]`)) return;
+    this.removeStyleByAttr(doc, this.FIRST_MARK_STYLE_ATTR);
 
+    const { bg, outline } = this.getFirstMatchRgba();
     const style = doc.createElement("style");
     style.setAttribute(this.FIRST_MARK_STYLE_ATTR, "1");
     style.textContent = `
 .textLayer .highlight.${this.FIRST_MARK_CLASS} {
-  background-color: rgba(0, 180, 80, 0.55) !important;
-  outline: 1px solid rgba(0, 120, 55, 0.75) !important;
+  background-color: ${bg} !important;
+  outline: 1px solid ${outline} !important;
 }
 `;
     const host = doc.head ?? doc.documentElement;
     host?.appendChild(style);
+  }
+
+  // 覆盖 PDF.js 默认的非首匹配（橙/黄）颜色。
+  // 用 :not(.zvh-global-first-match) 自动避开首匹配。
+  private static injectOtherMatchStyle(doc: Document) {
+    this.removeStyleByAttr(doc, this.OTHER_MATCH_STYLE_ATTR);
+
+    const bg = this.getOtherMatchRgba();
+    const style = doc.createElement("style");
+    style.setAttribute(this.OTHER_MATCH_STYLE_ATTR, "1");
+    style.textContent = `
+.textLayer .highlight:not(.${this.FIRST_MARK_CLASS}) {
+  --highlight-bg-color: ${bg} !important;
+  --find-highlight-bg-color: ${bg} !important;
+  background-color: ${bg} !important;
+  background: ${bg} !important;
+}
+`;
+    const host = doc.head ?? doc.documentElement;
+    host?.appendChild(style);
+  }
+
+  /**
+   * 当颜色相关 pref 改变时，遍历所有曾经注入过样式的内层 doc，移除并重注入。
+   * 已存在的 .highlight DOM 不需要动；CSS 替换后会立刻反映新颜色。
+   */
+  public static refreshAllInjectedStyles() {
+    const live: WeakRef<Document>[] = [];
+    for (const ref of this.injectedDocs) {
+      const doc = ref.deref();
+      if (!doc) continue;
+      try {
+        // doc 仍连接到 viewer：head/body 还在
+        if (!doc.head && !doc.documentElement) continue;
+        this.injectSuppressSelectedStyle(doc);
+        this.injectFirstMatchStyle(doc);
+        this.injectOtherMatchStyle(doc);
+        live.push(ref);
+      } catch (e) {
+        this.log(`refreshAllInjectedStyles per-doc failed: ${String(e)}`);
+      }
+    }
+    this.injectedDocs = live;
+  }
+
+  /**
+   * 注册 pref 观察者，颜色 / 不透明度 pref 改变时自动重注入 CSS。
+   * 在 hooks.ts onStartup 调用一次即可。
+   */
+  public static registerPrefObservers() {
+    this.unregisterPrefObservers();
+    const colorKeys = [
+      "firstMatchColor",
+      "firstMatchOpacity",
+      "otherMatchColor",
+      "otherMatchOpacity",
+    ];
+    for (const key of colorKeys) {
+      try {
+        const id = (Zotero.Prefs as any).registerObserver(
+          `extensions.zotero.zotero-var-highlighter.${key}`,
+          () => {
+            try {
+              this.refreshAllInjectedStyles();
+            } catch (e) {
+              this.log(`pref observer callback failed: ${String(e)}`);
+            }
+          },
+          true,
+        );
+        this.prefObserverIDs.push(id);
+      } catch (e) {
+        this.log(`registerPrefObservers failed for ${key}: ${String(e)}`);
+      }
+    }
+  }
+
+  public static unregisterPrefObservers() {
+    for (const id of this.prefObserverIDs) {
+      try {
+        (Zotero.Prefs as any).unregisterObserver(id);
+      } catch {
+        /* ignore */
+      }
+    }
+    this.prefObserverIDs = [];
   }
 
   // 检查我们的 marker class 是否还贴在指定 pageIdx 的 textLayer 里。

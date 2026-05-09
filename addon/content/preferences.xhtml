@@ -1,30 +1,169 @@
 <linkset>
   <html:link rel="localization" href="__addonRef__-preferences.ftl" />
 </linkset>
-<groupbox
+<vbox
   onload="Zotero.__addonInstance__.hooks.onPrefsEvent('load', { window })"
 >
-  <label><html:h2 data-l10n-id="pref-title"></html:h2></label>
-  <checkbox
-    id="zotero-prefpane-__addonRef__-enable"
-    preference="enable"
-    data-l10n-id="pref-enable"
-  />
-  <hbox>
-    <html:label
-      for="zotero-prefpane-__addonRef__-input"
-      data-l10n-id="pref-input"
-    ></html:label>
-    <html:input
-      type="text"
-      id="zotero-prefpane-__addonRef__-input"
-      preference="input"
-    ></html:input>
-  </hbox>
-  <hbox class="virtualized-table-container" flex="1" height="300px">
-    <html:div id="__addonRef__-table-container" />
-  </hbox>
-</groupbox>
+  <html:h2 data-l10n-id="pref-title"></html:h2>
+
+  <groupbox>
+    <label><html:h3 data-l10n-id="pref-section-general"></html:h3></label>
+    <checkbox
+      id="zotero-prefpane-__addonRef__-enable"
+      preference="enable"
+      data-l10n-id="pref-enable"
+    />
+    <checkbox
+      id="zotero-prefpane-__addonRef__-developer-mode"
+      preference="developerMode"
+      data-l10n-id="pref-developer-mode"
+    />
+    <description data-l10n-id="pref-developer-mode-hint" class="zvh-hint" />
+  </groupbox>
+
+  <groupbox>
+    <label><html:h3 data-l10n-id="pref-section-colors"></html:h3></label>
+
+    <hbox align="center" class="zvh-color-row">
+      <label data-l10n-id="pref-color-first-match" flex="1"></label>
+      <html:input
+        type="color"
+        id="zotero-prefpane-__addonRef__-first-match-color"
+        preference="firstMatchColor"
+      />
+      <html:input
+        type="number"
+        min="0"
+        max="100"
+        step="5"
+        id="zotero-prefpane-__addonRef__-first-match-opacity"
+        preference="firstMatchOpacity"
+        style="width: 5em; margin-left: 6px;"
+      />
+      <label data-l10n-id="pref-opacity-suffix"></label>
+    </hbox>
+
+    <hbox align="center" class="zvh-color-row">
+      <label data-l10n-id="pref-color-other-match" flex="1"></label>
+      <html:input
+        type="color"
+        id="zotero-prefpane-__addonRef__-other-match-color"
+        preference="otherMatchColor"
+      />
+      <html:input
+        type="number"
+        min="0"
+        max="100"
+        step="5"
+        id="zotero-prefpane-__addonRef__-other-match-opacity"
+        preference="otherMatchOpacity"
+        style="width: 5em; margin-left: 6px;"
+      />
+      <label data-l10n-id="pref-opacity-suffix"></label>
+    </hbox>
+
+    <hbox align="center" class="zvh-color-row">
+      <label data-l10n-id="pref-color-hover-first" flex="1"></label>
+      <html:input
+        type="color"
+        id="zotero-prefpane-__addonRef__-hover-first-color"
+        preference="hoverFirstColor"
+      />
+      <html:input
+        type="number"
+        min="0"
+        max="100"
+        step="5"
+        id="zotero-prefpane-__addonRef__-hover-first-opacity"
+        preference="hoverFirstOpacity"
+        style="width: 5em; margin-left: 6px;"
+      />
+      <label data-l10n-id="pref-opacity-suffix"></label>
+    </hbox>
+
+    <hbox align="center" class="zvh-color-row">
+      <label data-l10n-id="pref-color-hover-other" flex="1"></label>
+      <html:input
+        type="color"
+        id="zotero-prefpane-__addonRef__-hover-other-color"
+        preference="hoverOtherColor"
+      />
+      <html:input
+        type="number"
+        min="0"
+        max="100"
+        step="5"
+        id="zotero-prefpane-__addonRef__-hover-other-opacity"
+        preference="hoverOtherOpacity"
+        style="width: 5em; margin-left: 6px;"
+      />
+      <label data-l10n-id="pref-opacity-suffix"></label>
+    </hbox>
+  </groupbox>
+
+  <groupbox>
+    <label><html:h3 data-l10n-id="pref-section-preview"></html:h3></label>
+
+    <hbox align="center">
+      <label data-l10n-id="pref-preview-max-width" flex="1"></label>
+      <html:input
+        type="number"
+        min="280"
+        max="1200"
+        step="10"
+        id="zotero-prefpane-__addonRef__-preview-max-width"
+        preference="previewMaxWidth"
+        style="width: 7em;"
+      />
+      <label data-l10n-id="pref-px-suffix"></label>
+    </hbox>
+
+    <hbox align="center">
+      <label data-l10n-id="pref-preview-max-height" flex="1"></label>
+      <html:input
+        type="number"
+        min="200"
+        max="1200"
+        step="10"
+        id="zotero-prefpane-__addonRef__-preview-max-height"
+        preference="previewMaxHeight"
+        style="width: 7em;"
+      />
+      <label data-l10n-id="pref-px-suffix"></label>
+    </hbox>
+
+    <hbox align="center">
+      <label data-l10n-id="pref-hover-delay" flex="1"></label>
+      <html:input
+        type="number"
+        min="100"
+        max="2000"
+        step="50"
+        id="zotero-prefpane-__addonRef__-hover-delay"
+        preference="hoverDelayMs"
+        style="width: 7em;"
+      />
+      <label data-l10n-id="pref-ms-suffix"></label>
+    </hbox>
+
+    <vbox>
+      <hbox align="center">
+        <label data-l10n-id="pref-preview-vertical-focus" flex="1"></label>
+        <html:input
+          type="number"
+          min="0"
+          max="100"
+          step="5"
+          id="zotero-prefpane-__addonRef__-vertical-focus-num"
+          preference="verticalFocusRatio"
+          style="width: 5em;"
+        />
+        <label data-l10n-id="pref-percent-suffix"></label>
+      </hbox>
+      <description data-l10n-id="pref-preview-vertical-focus-hint" class="zvh-hint" />
+    </vbox>
+  </groupbox>
+</vbox>
 <vbox>
   <html:label
     data-l10n-id="pref-help"

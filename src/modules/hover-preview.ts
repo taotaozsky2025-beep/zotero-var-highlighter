@@ -1,4 +1,15 @@
+import { hexToRgba, readPrefSafe } from "../utils/colors";
+
 type Reader = any;
+
+const DEFAULT_HOVER_FIRST_COLOR = "#00c369";
+const DEFAULT_HOVER_FIRST_OPACITY = 55;
+const DEFAULT_HOVER_OTHER_COLOR = "#ff9e00";
+const DEFAULT_HOVER_OTHER_OPACITY = 45;
+const DEFAULT_HOVER_DELAY_MS = 350;
+const DEFAULT_PREVIEW_MAX_WIDTH = 800;
+const DEFAULT_PREVIEW_MAX_HEIGHT = 500;
+const DEFAULT_VERTICAL_FOCUS_RATIO_PCT = 40;
 
 export interface PreviewContext {
   query: string;
@@ -25,20 +36,54 @@ interface ReaderState {
 export class HoverPreview {
   private static readonly TAG = "ZVH-hover-preview-2026-05-08-r2";
 
-  private static readonly DEBUG_POPUP = false;
+  private static get DEBUG_POPUP(): boolean {
+    return readPrefSafe<boolean>("developerMode", false);
+  }
   private static readonly POPUP_THROTTLE_MS = 0;
 
-  private static readonly HOVER_DELAY_MS = 350;
+  private static get HOVER_DELAY_MS(): number {
+    const v = Number(readPrefSafe("hoverDelayMs", DEFAULT_HOVER_DELAY_MS));
+    return Number.isFinite(v) && v >= 0 ? v : DEFAULT_HOVER_DELAY_MS;
+  }
   private static readonly REENTRY_GRACE_MS = 120;
-  private static readonly POPUP_MAX_WIDTH_PX = 560;
-  private static readonly POPUP_MAX_HEIGHT_PX = 680;
+  private static get POPUP_MAX_WIDTH_PX(): number {
+    const v = Number(
+      readPrefSafe("previewMaxWidth", DEFAULT_PREVIEW_MAX_WIDTH),
+    );
+    return Number.isFinite(v) && v > 0 ? v : DEFAULT_PREVIEW_MAX_WIDTH;
+  }
+  private static get POPUP_MAX_HEIGHT_PX(): number {
+    const v = Number(
+      readPrefSafe("previewMaxHeight", DEFAULT_PREVIEW_MAX_HEIGHT),
+    );
+    return Number.isFinite(v) && v > 0 ? v : DEFAULT_PREVIEW_MAX_HEIGHT;
+  }
   private static readonly POPUP_MIN_WIDTH_PX = 280;
-  // 纵向裁切策略：以 first match 为中心向上/下扩展，
-  // 上 40% / 下 60% —— 变量定义的解释通常在定义后方
-  private static readonly VERTICAL_FOCUS_RATIO = 0.4;
+  // 纵向裁切策略：以 first match 为中心向上/下扩展。
+  // pref 用 0-100（百分比），运行时除以 100 转成 0..1。
+  private static get VERTICAL_FOCUS_RATIO(): number {
+    const pct = Number(
+      readPrefSafe("verticalFocusRatio", DEFAULT_VERTICAL_FOCUS_RATIO_PCT),
+    );
+    if (!Number.isFinite(pct)) return DEFAULT_VERTICAL_FOCUS_RATIO_PCT / 100;
+    return Math.max(0, Math.min(100, pct)) / 100;
+  }
   private static readonly STYLE_ATTR = "data-zvh-hover-preview-style";
 
   private static readonly FIRST_MARK_CLASS = "zvh-global-first-match";
+
+  private static getHoverFirstRgba(): string {
+    return hexToRgba(
+      readPrefSafe<string>("hoverFirstColor", DEFAULT_HOVER_FIRST_COLOR),
+      Number(readPrefSafe("hoverFirstOpacity", DEFAULT_HOVER_FIRST_OPACITY)),
+    );
+  }
+  private static getHoverOtherRgba(): string {
+    return hexToRgba(
+      readPrefSafe<string>("hoverOtherColor", DEFAULT_HOVER_OTHER_COLOR),
+      Number(readPrefSafe("hoverOtherOpacity", DEFAULT_HOVER_OTHER_OPACITY)),
+    );
+  }
 
   private static debugSeq = 0;
   private static lastPopupAt = 0;
@@ -96,9 +141,22 @@ export class HoverPreview {
    * 由 Highlighter 在 find 稳定（或每次 firstPageIdx 变化）时回调。
    * 同 (query, pageIdx) → 仅 hide popup 后复用 state；变了 → 销毁旧 state 重建。
    */
+  // 冷启动重试参数：第一次选词后内层 doc 可能尚未挂上，
+  // 此时 setupForReader 返回 null。重试 5 次 × 200ms 覆盖到 ~1s，
+  // 与 ensureReaderWarm 的兜底 timeout 留有重叠余量。
+  private static readonly SETUP_RETRY_ATTEMPTS = 5;
+  private static readonly SETUP_RETRY_INTERVAL_MS = 200;
+
   public static onFindCommitted(reader: Reader, ctx: PreviewContext) {
     if (!this.activated || !reader || !ctx) return;
+    this.tryCommitWithRetry(reader, ctx, 0);
+  }
 
+  private static tryCommitWithRetry(
+    reader: Reader,
+    ctx: PreviewContext,
+    attempt: number,
+  ) {
     try {
       const existing = this.states.get(reader);
       if (existing) {
@@ -119,8 +177,24 @@ export class HoverPreview {
         this.states.set(reader, state);
         this.popup(
           "onFindCommitted setup",
-          `query="${ctx.query}" page=${ctx.pageIdx + 1}`,
+          `query="${ctx.query}" page=${ctx.pageIdx + 1} attempt=${attempt}`,
           1800,
+        );
+        return;
+      }
+
+      // 冷启动：内层 doc/window 还未就绪，延迟再试。后续 polling reapply
+      // 也会再次触发本入口，所以只要这里能在前几次重试中命中即可。
+      if (attempt < this.SETUP_RETRY_ATTEMPTS) {
+        setTimeout(
+          () => this.tryCommitWithRetry(reader, ctx, attempt + 1),
+          this.SETUP_RETRY_INTERVAL_MS,
+        );
+      } else {
+        this.popup(
+          "onFindCommitted give up",
+          `setupForReader returned null after ${attempt} retries`,
+          2400,
         );
       }
     } catch (e) {
@@ -211,12 +285,12 @@ export class HoverPreview {
     if (doc.head?.querySelector(`style[${this.STYLE_ATTR}]`)) return;
     const style = doc.createElement("style");
     style.setAttribute(this.STYLE_ATTR, "1");
+    // 注意：min-width / max-width 不在这里写死，改为 showPopup 时按 pref 内联设置，
+    // 这样用户改 previewMaxWidth 立即生效，不需重启 reader。
     style.textContent = `
 .zvh-hover-preview {
   position: fixed;
   z-index: 999999;
-  min-width: ${this.POPUP_MIN_WIDTH_PX}px;
-  max-width: ${this.POPUP_MAX_WIDTH_PX}px;
   background: #ffffff;
   border: 1px solid rgba(0,0,0,0.18);
   border-radius: 6px;
@@ -484,6 +558,14 @@ export class HoverPreview {
         this.popup("showPopup skip", "page not rendered or no highlight", 1400);
         return;
       }
+      // pref 控制的尺寸内联应用，确保改 pref 立即生效
+      try {
+        state.popupEl.style.minWidth = `${this.POPUP_MIN_WIDTH_PX}px`;
+        state.popupEl.style.maxWidth = `${this.POPUP_MAX_WIDTH_PX}px`;
+        state.popupEl.style.maxHeight = `${this.POPUP_MAX_HEIGHT_PX}px`;
+      } catch {
+        /* ignore */
+      }
       this.positionPopup(state, mouseX, mouseY);
       state.popupEl.removeAttribute("hidden");
       state.popupVisible = true;
@@ -591,6 +673,36 @@ export class HoverPreview {
       } catch (e) {
         this.log(`drawImage failed: ${String(e)}`);
         return false;
+      }
+
+      // 叠绘高亮色块
+      try {
+        const scaleX = popupW_drawn / cropW;
+        const scaleY = popupH_drawn / cropH;
+        const allHl = textLayerDiv.querySelectorAll(".highlight");
+        for (const span of Array.from(allHl)) {
+          const el = span as HTMLElement;
+          const r = el.getBoundingClientRect();
+          const nx = (r.left - tlRect.left) * scale;
+          const ny = (r.top - tlRect.top) * scale;
+          const nw = r.width * scale;
+          const nh = r.height * scale;
+          const px = offsetX + nx * scaleX;
+          const py = (ny - cropY) * scaleY;
+          const pw = nw * scaleX;
+          const ph = nh * scaleY;
+          // 跳过完全在裁切区域外的
+          if (py + ph <= 0 || py >= popupH_drawn) continue;
+          const isFirst =
+            el.classList.contains("selected") ||
+            el.classList.contains(this.FIRST_MARK_CLASS);
+          ctx2d.fillStyle = isFirst
+            ? this.getHoverFirstRgba()
+            : this.getHoverOtherRgba();
+          ctx2d.fillRect(px, py, pw, ph);
+        }
+      } catch {
+        // 高亮叠绘失败不影响截图显示
       }
 
       try {

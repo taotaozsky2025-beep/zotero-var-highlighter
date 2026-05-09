@@ -22,6 +22,14 @@ async function onStartup() {
     Zotero.debug(`[${config.addonName}] ERROR activating Highlighter: ${e}`);
   }
   try {
+    Highlighter.registerPrefObservers();
+    Zotero.debug(`[${config.addonName}] Pref observers registered`);
+  } catch (e) {
+    Zotero.debug(
+      `[${config.addonName}] ERROR registering pref observers: ${e}`,
+    );
+  }
+  try {
     // @ts-expect-error
     HoverPreview.activate(Zotero[config.addonInstance]);
     Zotero.debug(`[${config.addonName}] HoverPreview activated`);
