@@ -70,6 +70,8 @@ export class Highlighter {
   private static lastPopupAt = 0;
   private static lastSelectionKey = "";
   private static lastSelectionAt = 0;
+  // 已完成冷启动 warm-up 的 reader 集合，避免每次 selection 都等
+  private static warmedReaders = new WeakSet<object>();
 
   private static addon: any;
   private static pluginID = "zotero-var-highlighter@local";
@@ -120,6 +122,50 @@ export class Highlighter {
     return new Promise<void>((resolve) => setTimeout(resolve, ms));
   }
 
+  /**
+   * 冷启动 warm-up：每个 reader 第一次走 selection 流程前等 PDF.js 完成核心初始化。
+   *
+   * 不做这一步的话：
+   *  - app.pdfViewer.container.scrollTop 可能还是初始 0，但用户实际看的是第 N 页，
+   *    后续 lockScroll 把 setter 锁成 0 → 页面被反复拉回顶部、看上去"乱跳"
+   *  - HoverPreview.getPdfInnerDoc 拿不到内层 doc → setupForReader 返回 null
+   *    → 第一次选词后 hover 不响应
+   *
+   * warm-up 完成后写入 WeakSet，后续 selection 直接走快路径不再等。
+   */
+  private static async ensureReaderWarm(app: any, reader: Reader): Promise<void> {
+    try {
+      if (this.warmedReaders.has(reader as object)) return;
+    } catch {
+      /* WeakSet 失败时降级：每次都等一遍，影响不大 */
+    }
+
+    try {
+      const initP = app?.initializedPromise;
+      if (initP && typeof initP.then === "function") {
+        await Promise.race([initP, this.delay(2500)]);
+      }
+    } catch {
+      /* ignore */
+    }
+    try {
+      const pagesP = app?.pdfViewer?.pagesPromise;
+      if (pagesP && typeof pagesP.then === "function") {
+        await Promise.race([pagesP, this.delay(2500)]);
+      }
+    } catch {
+      /* ignore */
+    }
+    // 让 PDF.js 把当前页面 layout / scrollTop 真正写入 container
+    await this.delay(80);
+
+    try {
+      this.warmedReaders.add(reader as object);
+    } catch {
+      /* ignore */
+    }
+  }
+
   public static activate(addon: any) {
     this.addon = addon;
     this.pluginID = addon?.data?.config?.addonRef || addon?.id || this.pluginID;
@@ -140,6 +186,7 @@ export class Highlighter {
     this.releaseScrollLock();
     this.clearFirstMatchMarker();
     this.unregisterPrefObservers();
+    this.warmedReaders = new WeakSet<object>();
     Zotero.Reader.unregisterEventListener(
       "renderTextSelectionPopup",
       this.handler,
@@ -255,13 +302,23 @@ export class Highlighter {
     this.releaseScrollLock();
     this.clearFirstMatchMarker();
     this.lastMarkerAppliedPageIdx = -1;
+
+    // 冷启动 warm-up：第一次跑这个 reader 时等 PDF.js 真正就绪，
+    // 否则 scrollTop 读到 0、内层 doc 拿不到，引发"页面乱跳 + hover 不响应"
+    await this.ensureReaderWarm(app, reader);
+
     this.prepareReaderHighlightStyles(reader, app);
 
-    // 3) 捕获滚动位置 + 锁滚动（解决”自动滑动”）
+    // 3) 捕获滚动位置 + 锁滚动（解决"自动滑动"）
     const initialScrollTop = app?.pdfViewer?.container?.scrollTop ?? 0;
     const initialScrollLeft = app?.pdfViewer?.container?.scrollLeft ?? 0;
+    const currentPage = Number(app?.pdfViewer?.currentPageNumber) || 1;
+    // 防御：warm-up 失败的极端情况下，currentPage>1 但 scrollTop=0 一定是 container 没就绪。
+    // 此时 lockScroll 会把 PDF.js 后续 scroll 全锁成 0，反而引发"页面被拉回顶部"。
+    // 直接跳过本次 lock，让 PDF.js 自己处理。
+    const scrollLooksUnstable = currentPage > 1 && initialScrollTop === 0;
     let unlock: (() => void) | null = null;
-    if (this.PREVENT_SCROLL) {
+    if (this.PREVENT_SCROLL && !scrollLooksUnstable) {
       unlock = this.lockScroll(
         app,
         this.SCROLL_LOCK_MS,
@@ -278,6 +335,12 @@ export class Highlighter {
         "lockScroll()",
         unlock ? `OK ${this.SCROLL_LOCK_MS}ms` : "FAILED",
         1800,
+      );
+    } else if (scrollLooksUnstable) {
+      this.popup(
+        "lockScroll() SKIP",
+        `cold-start guard: currentPage=${currentPage} scrollTop=0`,
+        2200,
       );
     }
 

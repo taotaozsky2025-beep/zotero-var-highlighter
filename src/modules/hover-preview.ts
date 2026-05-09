@@ -141,9 +141,22 @@ export class HoverPreview {
    * 由 Highlighter 在 find 稳定（或每次 firstPageIdx 变化）时回调。
    * 同 (query, pageIdx) → 仅 hide popup 后复用 state；变了 → 销毁旧 state 重建。
    */
+  // 冷启动重试参数：第一次选词后内层 doc 可能尚未挂上，
+  // 此时 setupForReader 返回 null。重试 5 次 × 200ms 覆盖到 ~1s，
+  // 与 ensureReaderWarm 的兜底 timeout 留有重叠余量。
+  private static readonly SETUP_RETRY_ATTEMPTS = 5;
+  private static readonly SETUP_RETRY_INTERVAL_MS = 200;
+
   public static onFindCommitted(reader: Reader, ctx: PreviewContext) {
     if (!this.activated || !reader || !ctx) return;
+    this.tryCommitWithRetry(reader, ctx, 0);
+  }
 
+  private static tryCommitWithRetry(
+    reader: Reader,
+    ctx: PreviewContext,
+    attempt: number,
+  ) {
     try {
       const existing = this.states.get(reader);
       if (existing) {
@@ -164,8 +177,24 @@ export class HoverPreview {
         this.states.set(reader, state);
         this.popup(
           "onFindCommitted setup",
-          `query="${ctx.query}" page=${ctx.pageIdx + 1}`,
+          `query="${ctx.query}" page=${ctx.pageIdx + 1} attempt=${attempt}`,
           1800,
+        );
+        return;
+      }
+
+      // 冷启动：内层 doc/window 还未就绪，延迟再试。后续 polling reapply
+      // 也会再次触发本入口，所以只要这里能在前几次重试中命中即可。
+      if (attempt < this.SETUP_RETRY_ATTEMPTS) {
+        setTimeout(
+          () => this.tryCommitWithRetry(reader, ctx, attempt + 1),
+          this.SETUP_RETRY_INTERVAL_MS,
+        );
+      } else {
+        this.popup(
+          "onFindCommitted give up",
+          `setupForReader returned null after ${attempt} retries`,
+          2400,
         );
       }
     } catch (e) {
