@@ -593,6 +593,36 @@ export class HoverPreview {
         return false;
       }
 
+      // 叠绘高亮色块
+      try {
+        const scaleX = popupW_drawn / cropW;
+        const scaleY = popupH_drawn / cropH;
+        const allHl = textLayerDiv.querySelectorAll(".highlight");
+        for (const span of Array.from(allHl)) {
+          const el = span as HTMLElement;
+          const r = el.getBoundingClientRect();
+          const nx = (r.left - tlRect.left) * scale;
+          const ny = (r.top - tlRect.top) * scale;
+          const nw = r.width * scale;
+          const nh = r.height * scale;
+          const px = offsetX + nx * scaleX;
+          const py = (ny - cropY) * scaleY;
+          const pw = nw * scaleX;
+          const ph = nh * scaleY;
+          // 跳过完全在裁切区域外的
+          if (py + ph <= 0 || py >= popupH_drawn) continue;
+          const isFirst =
+            el.classList.contains("selected") ||
+            el.classList.contains(this.FIRST_MARK_CLASS);
+          ctx2d.fillStyle = isFirst
+            ? "rgba(0, 195, 105, 0.55)"
+            : "rgba(255, 158, 0, 0.45)";
+          ctx2d.fillRect(px, py, pw, ph);
+        }
+      } catch {
+        // 高亮叠绘失败不影响截图显示
+      }
+
       try {
         state.popupHeader.textContent = `Page ${state.ctx.pageIdx + 1} · "${state.ctx.query}"`;
       } catch {
