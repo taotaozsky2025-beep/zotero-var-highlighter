@@ -9,12 +9,6 @@ type RenderTextSelectionPopupEvent = {
   append?: (node: Node) => void;
 };
 
-type ScrollSnapshot = {
-  scrollTop: number;
-  scrollLeft: number;
-  pageNumber?: number;
-};
-
 type GlobalFirstMatchResult = {
   ready: boolean;
   pageIdx: number;
@@ -47,7 +41,6 @@ export class Highlighter {
   // PDF.js 异步分页搜索可能耗时数秒，方法 patch 需覆盖整个搜索过程；
   // 这里不持续监听 scroll，只在触发 find 后做短窗口回位，避免拦截用户主动滚动。
   private static readonly SCROLL_LOCK_MS = 8000; // 滚动锁定/方法 patch 总时长（ms）
-  private static readonly HARD_SCROLL_RESTORE_MS = 1400;
   private static readonly AFTER_FIND_FORCE_FIRST_DELAY_MS = 200; // 初次强制首匹配的延迟（ms）
   private static readonly ENTIRE_WORD_FOR_SINGLE_ASCII = false;
   // 不再写 PDF.js 的 _selected/_offset 或调用 _updateMatch(true)；
@@ -255,19 +248,17 @@ export class Highlighter {
     this.lastMarkerAppliedPageIdx = -1;
     this.prepareReaderHighlightStyles(reader, app);
 
-    // 3) 捕获视图 + 锁滚动（解决“自动滑动”）
-    const snap = this.captureScroll(app);
-    this.popup(
-      "captureScroll()",
-      snap
-        ? `top=${snap.scrollTop} left=${snap.scrollLeft} page=${snap.pageNumber ?? "?"}`
-        : "FAILED",
-      1800,
-    );
-
+    // 3) 捕获滚动位置 + 锁滚动（解决”自动滑动”）
+    const initialScrollTop = app?.pdfViewer?.container?.scrollTop ?? 0;
+    const initialScrollLeft = app?.pdfViewer?.container?.scrollLeft ?? 0;
     let unlock: (() => void) | null = null;
-    if (this.PREVENT_SCROLL && snap) {
-      unlock = this.lockScroll(app, snap, this.SCROLL_LOCK_MS);
+    if (this.PREVENT_SCROLL) {
+      unlock = this.lockScroll(
+        app,
+        this.SCROLL_LOCK_MS,
+        initialScrollTop,
+        initialScrollLeft,
+      );
       this.scrollUnlock = unlock;
       if (unlock) {
         setTimeout(() => {
@@ -489,39 +480,15 @@ export class Highlighter {
     }
   }
 
-  private static captureScroll(app: any): ScrollSnapshot | null {
-    try {
-      const container =
-        app?.pdfViewer?.container ??
-        app?.appConfig?.mainContainer ??
-        app?.appConfig?.viewerContainer ??
-        null;
-      if (!container) return null;
-
-      const pageNumber =
-        typeof app?.pdfViewer?.currentPageNumber === "number"
-          ? app.pdfViewer.currentPageNumber
-          : undefined;
-
-      return {
-        scrollTop: Number(container.scrollTop) || 0,
-        scrollLeft: Number(container.scrollLeft) || 0,
-        pageNumber,
-      };
-    } catch (e) {
-      this.log(`captureScroll failed: ${String(e)}`);
-      return null;
-    }
-  }
-
   /**
    * 短时间锁住滚动，阻止 PDF.js 在 find 后把 current match 滚动入视野。
    * PDF.js 的滚动通常来自 findController 的 scrollMatchIntoView / viewer 的 scrollPageIntoView 等路径。:contentReference[oaicite:1]{index=1}
    */
   private static lockScroll(
     app: any,
-    snap: ScrollSnapshot,
     durationMs: number,
+    initialScrollTop: number,
+    initialScrollLeft: number,
   ): (() => void) | null {
     try {
       const container =
@@ -583,45 +550,63 @@ export class Highlighter {
         };
       }
 
-      // 2) 一次性回到 snap：仅在 0 / 50 / 150 ms 三个时点同步把视图拉回原位置，
-      //    覆盖 PDF.js 在 dispatch find 后立即/异步触发的极少数不走 method patch
-      //    的滚动路径。之后就完全不再监听/拦截 scroll，把控制权交还用户。
-      //    注意：此前版本曾用持续 scroll 事件回滚做“双保险”，但会拦截用户主动滚动，
-      //    用户感觉“被拉回”；wheel/keydown 信号在 Zotero reader 里不可靠（监听不到），
-      //    所以这里改为短窗口的脉冲式回滚 + 长期 method patch 的组合方案。
-      const restoreToSnap = () => {
-        try {
-          if (container.scrollTop !== snap.scrollTop)
-            container.scrollTop = snap.scrollTop;
-          if (container.scrollLeft !== snap.scrollLeft)
-            container.scrollLeft = snap.scrollLeft;
-        } catch {
-          /* ignore */
-        }
-      };
-      restoreToSnap();
-      for (const ms of [50, 150, 300, 600, 1000, 1400]) {
-        setTimeout(restoreToSnap, ms);
-      }
-
-      let hardRestoreActive = true;
-      const onScroll = () => {
-        if (!hardRestoreActive) return;
-        restoreToSnap();
-      };
+      // 2) 拦截 scrollTop/scrollLeft 的直接赋值。
+      //    PDF.js 内部 scrollIntoView() 工具函数直接写 parent.scrollTop，
+      //    绕过了所有 method patch；用 Object.defineProperty 封住 setter 是唯一出路。
+      //    通过 wrappedJSObject 拿到 iframe 内的真实 JS 对象再 defineProperty，
+      //    避免 Xray wrapper 的限制。
+      let scrollTopLocked = true;
+      let scrollLeftLocked = true;
+      const containerJs = (container as any).wrappedJSObject ?? container;
       try {
-        container.addEventListener("scroll", onScroll, { passive: true });
+        Object.defineProperty(containerJs, "scrollTop", {
+          get() {
+            return initialScrollTop;
+          },
+          set(_v: number) {
+            if (!scrollTopLocked) {
+              delete (this as any).scrollTop;
+              (this as any).scrollTop = _v;
+            }
+          },
+          configurable: true,
+        });
+      } catch {
+        /* 沙盒限制导致 defineProperty 失败时，退化为无保护 */
+      }
+      try {
+        Object.defineProperty(containerJs, "scrollLeft", {
+          get() {
+            return initialScrollLeft;
+          },
+          set(_v: number) {
+            if (!scrollLeftLocked) {
+              delete (this as any).scrollLeft;
+              (this as any).scrollLeft = _v;
+            }
+          },
+          configurable: true,
+        });
       } catch {
         /* ignore */
       }
+
+      // setter 拦截只保持短窗口（覆盖 PDF.js 异步跳动），之后立即释放让用户正常滚动
+      const SETTER_LOCK_MS = 300;
       setTimeout(() => {
-        hardRestoreActive = false;
+        scrollTopLocked = false;
+        scrollLeftLocked = false;
         try {
-          container.removeEventListener("scroll", onScroll);
+          delete (containerJs as any).scrollTop;
         } catch {
           /* ignore */
         }
-      }, this.HARD_SCROLL_RESTORE_MS);
+        try {
+          delete (containerJs as any).scrollLeft;
+        } catch {
+          /* ignore */
+        }
+      }, SETTER_LOCK_MS);
 
       // 3) 方法 patch 在 durationMs 后恢复（覆盖整个搜索过程，阻止 PDF.js 主动跳页）
       let methodPatchActive = true;
@@ -669,12 +654,6 @@ export class Highlighter {
           /* ignore */
         }
 
-        hardRestoreActive = false;
-        try {
-          container.removeEventListener("scroll", onScroll);
-        } catch {
-          /* ignore */
-        }
       };
 
       setTimeout(unlock, durationMs);
