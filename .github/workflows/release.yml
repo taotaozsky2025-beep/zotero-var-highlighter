@@ -21,11 +21,16 @@ jobs:
         shell: bash
         run: |
           tag="v$(node -p "require('./package.json').version")"
-          git tag "$tag"
-          git push origin "$tag"
+          if git rev-parse "$tag" >/dev/null 2>&1; then
+            echo "Tag $tag already exists."
+          else
+            git tag "$tag"
+            git push origin "$tag"
+          fi
 
   create-release:
-    if: github.event_name == 'push'
+    needs: create-tag
+    if: always() && (github.event_name == 'push' || needs.create-tag.result == 'success')
     uses: zotero-plugin-dev/workflows/.github/workflows/release-plugin.yml@main
     # You can customize any of the inputs here.
     # If you omit an input, its default value will be used.
