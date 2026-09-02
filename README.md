@@ -84,4 +84,3 @@ Open **Zotero → Settings → Zotero Var Highlighter** to adjust:
 - Initial release.
 - Auto-highlight all occurrences of selected text across the entire PDF.
 - First-occurrence marker (green) to locate variable definitions.
-
