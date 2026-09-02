@@ -1,7 +1,7 @@
 # Zotero Var Highlighter
 
 [![zotero target version](https://img.shields.io/badge/Zotero-7--10-green?style=flat-square&logo=zotero&logoColor=CC2936)](https://www.zotero.org)
-[![version](https://img.shields.io/badge/version-0.2.0-blue?style=flat-square)](https://github.com/taotaozsky2025-beep/zotero-var-highlighter/releases/latest)
+[![version](https://img.shields.io/badge/version-0.2.1-blue?style=flat-square)](https://github.com/taotaozsky2025-beep/zotero-var-highlighter/releases/latest)
 [![Using Zotero Var Highlighter](https://img.shields.io/badge/Using-Zotero%20Plugin%20Template-blue?style=flat-square&logo=github)](https://github.com/windingwind/zotero-plugin-template)
 
 [Chinese Version 简体中文](doc/README-zhCN.md)
@@ -70,8 +70,9 @@ Open **Zotero → Settings → Zotero Var Highlighter** to adjust:
 
 ## Changelog
 
-### Unreleased
+### v0.2.1
 - **Compatibility**: Add Zotero 10 support by extending the plugin compatibility range to Zotero `10.0.*`.
+- **Packaging**: Resize the bundled icons to their display dimensions, substantially reducing the XPI download size.
 
 ### v0.2.0
 - **New**: Hover preview — hover over an orange highlight to see a popup showing the first occurrence of the selected text.
@@ -83,3 +84,4 @@ Open **Zotero → Settings → Zotero Var Highlighter** to adjust:
 - Initial release.
 - Auto-highlight all occurrences of selected text across the entire PDF.
 - First-occurrence marker (green) to locate variable definitions.
+
