@@ -12,7 +12,20 @@ permissions:
   pull-requests: write
 
 jobs:
+  create-tag:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Create version tag
+        shell: bash
+        run: |
+          tag="v$(node -p "require('./package.json').version")"
+          git tag "$tag"
+          git push origin "$tag"
+
   create-release:
+    if: github.event_name == 'push'
     uses: zotero-plugin-dev/workflows/.github/workflows/release-plugin.yml@main
     # You can customize any of the inputs here.
     # If you omit an input, its default value will be used.
