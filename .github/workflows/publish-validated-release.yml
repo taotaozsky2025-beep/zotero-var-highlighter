@@ -1,0 +1,77 @@
+name: Publish validated v0.2.2
+
+on:
+  push:
+    branches:
+      - fix/issue-22-toolkit-6
+    paths:
+      - .github/workflows/publish-validated-release.yml
+
+permissions:
+  contents: write
+
+concurrency:
+  group: publish-v0.2.2
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout validated main revision
+        uses: zotero-plugin-dev/workflows/setup-js@899417a9d7f9453df25d4241d4ee16a70a743e58
+        with:
+          ref: "da5928916abc910699cf0c043b0c3fc95ab45e1c"
+          fetch-all: "true"
+          auto-install: "false"
+          node-version: "26"
+      - name: Install locked dependencies
+        run: npm ci
+      - name: Build release
+        run: npm run build
+      - name: Verify production package
+        run: |
+          test "$(git rev-parse HEAD)" = "da5928916abc910699cf0c043b0c3fc95ab45e1c"
+          test "$(node -p "require('./package.json').version")" = "0.2.2"
+          test "$(node -p "require('./node_modules/zotero-plugin-toolkit/package.json').version")" = "6.0.0"
+          python3 - <<'PY'
+          import hashlib
+          import json
+          from pathlib import Path
+          import zipfile
+
+          packages = list(Path(".scaffold/build").rglob("*.xpi"))
+          assert len(packages) == 1
+          with zipfile.ZipFile(packages[0]) as archive:
+              assert json.loads(archive.read("manifest.json"))["version"] == "0.2.2"
+              script = archive.read("content/scripts/zotero-var-highlighter.js").decode("utf-8")
+              assert "zotero://plugin" not in script
+              assert "zotero://ztoolkit-debug" not in script
+          print("Release XPI SHA256:", hashlib.sha256(packages[0].read_bytes()).hexdigest())
+          PY
+      - name: Tag validated main revision
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          main_sha="$(gh api "repos/$GITHUB_REPOSITORY/git/ref/heads/main" --jq '.object.sha')"
+          test "$main_sha" = "da5928916abc910699cf0c043b0c3fc95ab45e1c"
+          if git show-ref --verify --quiet refs/tags/v0.2.2; then
+            test "$(git rev-list -n 1 refs/tags/v0.2.2)" = "da5928916abc910699cf0c043b0c3fc95ab45e1c"
+          else
+            git tag v0.2.2 "da5928916abc910699cf0c043b0c3fc95ab45e1c"
+            git push origin refs/tags/v0.2.2
+          fi
+      - name: Publish XPI and Zotero update index
+        run: npm run release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Record published package checksum
+        run: sha256sum .scaffold/build/zotero-var-highlighter.xpi
+      - name: Add upgrade restart note
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release view v0.2.2 --json body --jq '.body' > "$RUNNER_TEMP/release-notes.md"
+          printf '\n\n**After upgrading:** fully exit and restart Zotero to clear protocol handlers left by the previous version.\n' >> "$RUNNER_TEMP/release-notes.md"
+          gh release edit v0.2.2 --notes-file "$RUNNER_TEMP/release-notes.md"
