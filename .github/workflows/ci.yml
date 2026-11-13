@@ -28,6 +28,30 @@ jobs:
         uses: zotero-plugin-dev/workflows/setup-js@main
       - name: Run Build
         run: npm run build
+      - name: Verify production XPI security
+        run: |
+          python3 - <<'PY'
+          import hashlib
+          import json
+          from pathlib import Path
+          import zipfile
+
+          forbidden = ("zotero://plugin", "zotero://ztoolkit-debug")
+          script_path = "content/scripts/zotero-var-highlighter.js"
+          unpacked = Path(".scaffold/build/addon") / script_path
+          script = unpacked.read_text(encoding="utf-8")
+          assert not any(value in script for value in forbidden), "Debug protocol in production bundle"
+          packages = list(Path(".scaffold/build").rglob("*.xpi"))
+          assert len(packages) == 1, "Expected exactly one production XPI"
+          package = packages[0]
+          with zipfile.ZipFile(package) as archive:
+              manifest = json.loads(archive.read("manifest.json"))
+              assert manifest["version"] == "0.2.2", "Unexpected release version"
+              script = archive.read(script_path).decode("utf-8")
+              assert not any(value in script for value in forbidden), "Debug protocol in packaged XPI"
+          print("Verified production XPI:", package)
+          print("SHA256:", hashlib.sha256(package.read_bytes()).hexdigest())
+          PY
       - name: Upload build result
         uses: actions/upload-artifact@v4
         with:
