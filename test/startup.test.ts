@@ -58,10 +58,20 @@ describe("startup and toolkit security", function () {
     const io = Components.classes[
       "@mozilla.org/network/io-service;1"
     ].getService(Components.interfaces.nsIIOService);
-    const extensions = (io.getProtocolHandler("zotero") as any).wrappedJSObject
-      ._extensions;
-    assert.notProperty(extensions, "zotero://plugin");
-    assert.notProperty(extensions, "zotero://ztoolkit-debug");
+    const protocol = io.getProtocolHandler("zotero") as any;
+    const extensions = protocol.wrappedJSObject._extensions;
+    const forbidden = Object.keys(extensions).filter(
+      (key) => key === "zotero://plugin" || key === "zotero://ztoolkit-debug",
+    );
+    (globalThis as any).debug({
+      toolkitVersion: Zotero[config.addonInstance].data.ztoolkit._version,
+      protocolKeys: Object.keys(extensions),
+      installHandlerType: typeof extensions["zotero://plugin"],
+      debugHandlerType: typeof extensions["zotero://ztoolkit-debug"],
+    });
+    assert.deepEqual(forbidden, []);
+    assert.isUndefined(extensions["zotero://plugin"]);
+    assert.isUndefined(extensions["zotero://ztoolkit-debug"]);
   });
 });
 
@@ -85,7 +95,8 @@ describe("PDF highlighting and hover preview", function () {
     app = await waitFor(
       () => {
         const outer = reader?._iframeWindow;
-        const candidate = (outer?.wrappedJSObject ?? outer)?.PDFViewerApplication;
+        const unwrapped = outer?.wrappedJSObject ?? outer;
+        const candidate = unwrapped?.PDFViewerApplication;
         return candidate?.pdfDocument && candidate?.pdfViewer?.container
           ? candidate
           : null;
@@ -105,7 +116,7 @@ describe("PDF highlighting and hover preview", function () {
     if (temporaryFile?.exists()) temporaryFile.remove(false);
   });
 
-  it("highlights matches on both pages and marks the global first match", async function () {
+  it("highlights both pages and marks the first match", async function () {
     (Zotero.Reader as any)._dispatchEvent({
       type: "renderTextSelectionPopup",
       reader,
@@ -128,7 +139,7 @@ describe("PDF highlighting and hover preview", function () {
     assert.exists(doc.querySelector(".zvh-hover-preview[hidden]"));
   });
 
-  it("previews a non-first occurrence and hides the preview on mouseout", async function () {
+  it("shows and hides the hover preview", async function () {
     const target = await waitFor(
       () =>
         doc.querySelector(
@@ -164,7 +175,7 @@ describe("PDF highlighting and hover preview", function () {
     );
   });
 
-  it("replaces the old highlights when a different variable is selected", async function () {
+  it("replaces matches for a new variable", async function () {
     (Zotero.Reader as any)._dispatchEvent({
       type: "renderTextSelectionPopup",
       reader,
