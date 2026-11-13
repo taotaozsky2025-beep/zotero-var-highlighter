@@ -91,17 +91,14 @@ describe("PDF highlighting and hover preview", function () {
       libraryID: Zotero.Libraries.userLibraryID,
     });
     reader = await Zotero.Reader.open(attachment.id);
-    app = await waitFor(
-      () => {
-        const outer = reader?._iframeWindow;
-        const unwrapped = outer?.wrappedJSObject ?? outer;
-        const candidate = unwrapped?.PDFViewerApplication;
-        return candidate?.pdfDocument && candidate?.pdfViewer?.container
-          ? candidate
-          : null;
-      },
-      "PDF.js reader did not initialize",
-    );
+    app = await waitFor(() => {
+      const outer = reader?._iframeWindow;
+      const unwrapped = outer?.wrappedJSObject ?? outer;
+      const candidate = unwrapped?.PDFViewerApplication;
+      return candidate?.pdfDocument && candidate?.pdfViewer?.container
+        ? candidate
+        : null;
+    }, "PDF.js reader did not initialize");
     doc = app.pdfViewer.container.ownerDocument;
     await waitFor(
       () => doc.querySelector(".textLayer span"),
@@ -123,13 +120,10 @@ describe("PDF highlighting and hover preview", function () {
       params: { text: "ZVHprobe" },
       append: () => {},
     });
-    await waitFor(
-      () => {
-        const matches = app.findController?.pageMatches;
-        return matches?.[0]?.length === 2 && matches?.[1]?.length === 1;
-      },
-      "Expected two matches on page one and one on page two",
-    );
+    await waitFor(() => {
+      const matches = app.findController?.pageMatches;
+      return matches?.[0]?.length === 2 && matches?.[1]?.length === 1;
+    }, "Expected two matches on page one and one on page two");
     await waitFor(
       () => doc.querySelector(".zvh-global-first-match"),
       "The first occurrence was not marked",
@@ -182,13 +176,10 @@ describe("PDF highlighting and hover preview", function () {
       params: { text: "ZVHother" },
       append: () => {},
     });
-    await waitFor(
-      () => {
-        const matches = app.findController?.pageMatches;
-        return matches?.[0]?.length === 1 && matches?.[1]?.length === 0;
-      },
-      "Selecting a new variable did not replace the old search",
-    );
+    await waitFor(() => {
+      const matches = app.findController?.pageMatches;
+      return matches?.[0]?.length === 1 && matches?.[1]?.length === 0;
+    }, "Selecting a new variable did not replace the old search");
     const first = await waitFor(
       () => doc.querySelector(".zvh-global-first-match"),
       "The new variable's first occurrence was not marked",

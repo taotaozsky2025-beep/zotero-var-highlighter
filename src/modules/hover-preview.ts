@@ -626,7 +626,8 @@ export class HoverPreview {
       } else {
         const cropHNative = this.POPUP_MAX_HEIGHT_PX / fitScaleByWidth;
         const matchCenterY = sy + sh / 2;
-        const desiredTop = matchCenterY - cropHNative * this.VERTICAL_FOCUS_RATIO;
+        const desiredTop =
+          matchCenterY - cropHNative * this.VERTICAL_FOCUS_RATIO;
         cropY = Math.max(
           0,
           Math.min(sourceCanvas.height - cropHNative, desiredTop),
@@ -724,8 +725,7 @@ export class HoverPreview {
   ) {
     try {
       const docEl = state.innerDoc.documentElement;
-      const viewportW =
-        docEl?.clientWidth ?? state.innerWin.innerWidth ?? 800;
+      const viewportW = docEl?.clientWidth ?? state.innerWin.innerWidth ?? 800;
       const viewportH =
         docEl?.clientHeight ?? state.innerWin.innerHeight ?? 600;
 

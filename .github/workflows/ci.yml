@@ -18,13 +18,6 @@ jobs:
         uses: zotero-plugin-dev/workflows/setup-js@main
       - name: Run Lint
         run: npm run lint:check
-      - name: Show formatting fixes
-        if: failure()
-        run: |
-          npx prettier --write .
-          echo BEGIN_FORMAT_PATCH
-          git diff --binary
-          echo END_FORMAT_PATCH
 
   build:
     runs-on: ubuntu-latest
