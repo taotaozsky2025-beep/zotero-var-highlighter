@@ -37,6 +37,7 @@ jobs:
           import zipfile
 
           forbidden = ("zotero://plugin", "zotero://ztoolkit-debug")
+          metadata = json.loads(Path("package.json").read_text(encoding="utf-8"))
           script_path = "content/scripts/zotero-var-highlighter.js"
           unpacked = Path(".scaffold/build/addon") / script_path
           script = unpacked.read_text(encoding="utf-8")
@@ -46,7 +47,7 @@ jobs:
           package = packages[0]
           with zipfile.ZipFile(package) as archive:
               manifest = json.loads(archive.read("manifest.json"))
-              assert manifest["version"] == "0.2.2", "Unexpected release version"
+              assert manifest["version"] == metadata["version"], "Unexpected release version"
               script = archive.read(script_path).decode("utf-8")
               assert not any(value in script for value in forbidden), "Debug protocol in packaged XPI"
           print("Verified production XPI:", package)
