@@ -61,9 +61,24 @@ jobs:
 
   test:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        channel: [release, beta]
     needs:
       - build
     steps:
       - name: Setup JS
         uses: zotero-plugin-dev/workflows/setup-js@main
+      - name: Install Zotero for the selected channel
+        run: |
+          curl --fail --location --retry 3 \
+            --output "$RUNNER_TEMP/zotero.tar.bz2" \
+            "https://www.zotero.org/download/client/dl?platform=linux-x86_64&channel=${{ matrix.channel }}"
+          mkdir -p "$RUNNER_TEMP/zvh-zotero"
+          tar -xf "$RUNNER_TEMP/zotero.tar.bz2" -C "$RUNNER_TEMP/zvh-zotero"
+          binary="$RUNNER_TEMP/zvh-zotero/Zotero_linux-x86_64/zotero"
+          test -x "$binary"
+          echo "ZOTERO_PLUGIN_ZOTERO_BIN_PATH=$binary" >> "$GITHUB_ENV"
       - run: npm run test
