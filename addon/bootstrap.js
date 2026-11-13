@@ -57,7 +57,9 @@ async function startup({ id, version, resourceURI, rootURI }, reason) {
   } catch (e) {
     try {
       Zotero.logError(e);
-    } catch (_) {}
+    } catch (_) {
+      // Logging is best-effort during startup.
+    }
     return; // 必须 return，否则继续抛更难读的错误
   }
 
@@ -66,7 +68,9 @@ async function startup({ id, version, resourceURI, rootURI }, reason) {
   } catch (e) {
     try {
       Zotero.logError(e);
-    } catch (_) {}
+    } catch (_) {
+      // Logging is best-effort during startup.
+    }
   }
 
   // 注册 Zotero 7 设置面板。Zotero 不会自动发现 preferences.xhtml，
@@ -83,7 +87,9 @@ async function startup({ id, version, resourceURI, rootURI }, reason) {
   } catch (e) {
     try {
       Zotero.logError(e);
-    } catch (_) {}
+    } catch (_) {
+      // Logging is best-effort during startup.
+    }
   }
 }
 

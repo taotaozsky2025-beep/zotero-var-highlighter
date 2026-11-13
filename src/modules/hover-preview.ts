@@ -640,7 +640,7 @@ export class HoverPreview {
       cropH = Math.min(cropH, sourceCanvas.height - cropY);
 
       let popupW = Math.max(1, Math.round(cropW * fitScaleByWidth));
-      let popupH = Math.max(1, Math.round(cropH * fitScaleByWidth));
+      const popupH = Math.max(1, Math.round(cropH * fitScaleByWidth));
       const popupW_drawn = popupW;
       const popupH_drawn = popupH;
       if (popupW < this.POPUP_MIN_WIDTH_PX) {
