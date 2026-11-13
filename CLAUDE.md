@@ -3,6 +3,7 @@
 ## 项目概述
 
 一个 Zotero 7 插件，用于在 PDF 阅读器中高亮选中文本。当用户在 PDF 中选中任意文本时，插件会：
+
 1. 高亮 **所有出现位置**（通过 PDF.js find，显示为橙色/黄色）。
 2. 将 **全文第一次出现** 的位置强制设为"当前匹配"（显示为绿色），通常对应变量的定义处。
 
@@ -15,7 +16,7 @@
 - **语言**：TypeScript（通过 esbuild 编译为兼容 Firefox 115 的 JS）
 - **插件框架**：`zotero-plugin-toolkit` + `zotero-plugin-scaffold`
 - **PDF 引擎**：PDF.js（内置于 Zotero，通过 `PDFViewerApplication` 访问）
-- **构建产物**：可安装到 Zotero 6.999–8.* 的 XPI 文件
+- **构建产物**：可安装到 Zotero 6.999–8.\* 的 XPI 文件
 
 ---
 
@@ -95,14 +96,14 @@ bootstrap.js startup()
 
 ### 重要常量
 
-| 常量 | 默认值 | 用途 |
-|---|---|---|
-| `CASE_SENSITIVE` | `true` | 严格区分大小写，防止 Φ/φ 混淆 |
-| `PREVENT_SCROLL` | `true` | 阻止 PDF.js 自动滚动到匹配位置 |
-| `SCROLL_LOCK_MS` | `1200` | 触发 find 后滚动锁定的持续时间（毫秒） |
-| `AFTER_FIND_FORCE_FIRST_DELAY_MS` | `200` | 触发强制首匹配前的等待时间（毫秒） |
-| `DEBUG_POPUP` | `false` | 设为 `true` 可开启调试用 ProgressWindow 弹窗 |
-| `POPUP_THROTTLE_MS` | `0` | 调试弹窗的节流间隔 |
+| 常量                              | 默认值  | 用途                                         |
+| --------------------------------- | ------- | -------------------------------------------- |
+| `CASE_SENSITIVE`                  | `true`  | 严格区分大小写，防止 Φ/φ 混淆                |
+| `PREVENT_SCROLL`                  | `true`  | 阻止 PDF.js 自动滚动到匹配位置               |
+| `SCROLL_LOCK_MS`                  | `1200`  | 触发 find 后滚动锁定的持续时间（毫秒）       |
+| `AFTER_FIND_FORCE_FIRST_DELAY_MS` | `200`   | 触发强制首匹配前的等待时间（毫秒）           |
+| `DEBUG_POPUP`                     | `false` | 设为 `true` 可开启调试用 ProgressWindow 弹窗 |
+| `POPUP_THROTTLE_MS`               | `0`     | 调试弹窗的节流间隔                           |
 
 ### 关键方法
 
@@ -125,10 +126,10 @@ PDF.js 运行在 Firefox 沙盒中。在 Zotero JS 上下文中创建的对象�
 
 两个偏好项（主要为模板脚手架残留，高亮器当前未使用）：
 
-| 键名 | 类型 | 默认值 |
-|---|---|---|
-| `extensions.zotero.zotero-var-highlighter.enable` | boolean | `true` |
-| `extensions.zotero.zotero-var-highlighter.input` | string | `"This is input"` |
+| 键名                                              | 类型    | 默认值            |
+| ------------------------------------------------- | ------- | ----------------- |
+| `extensions.zotero.zotero-var-highlighter.enable` | boolean | `true`            |
+| `extensions.zotero.zotero-var-highlighter.input`  | string  | `"This is input"` |
 
 ---
 
@@ -182,6 +183,7 @@ npm run release  # 创建发布版本
 ### 核心设计
 
 **根本问题**：Zotero reader 的 iframe 是**嵌套的**：
+
 - 外层 `reader._iframeWindow`（暴露 `PDFViewerApplication`）
 - 内层 PDF.js viewer.html（真正承载 `.textLayer`、`.highlight`、page canvas）
 
@@ -189,13 +191,13 @@ npm run release  # 创建发布版本
 
 **修复方案**（`src/modules/hover-preview.ts`）：
 
-| 步骤 | 实现 |
-|---|---|
-| 1. 定位内层 doc | `getPdfInnerDoc(app, reader)` —— 链式尝试 `pdfViewer.container.ownerDocument` / `viewer.ownerDocument` / `appConfig.mainContainer.ownerDocument` / `_pages[0].div.ownerDocument`，最后兜底 `reader._iframeWindow.document` |
-| 2. 所有 DOM 操作在内层 doc 执行 | popup `<div>` / `<canvas>` 创建、style 注入、`mouseover/mouseout` listener、`scroll/resize` listener 均使用 `innerDoc` |
-| 3. 等比缩放渲染 | 横向取整页宽（不做窄裁切），纵向以首匹配为中心（上 40% / 下 60%）截出一段段；缩放到 popup max（560×680），绝不非等比拉伸 |
-| 4. 防御式访问 | 每次 hover 重新解析 app、pageView、canvas，不缓存；每个 PDF.js 访问点单独 try/catch |
-| 5. 生命周期注册 | `hooks.ts` 中 `onStartup` 调 `HoverPreview.activate()`，`onShutdown` 调 `deactivate()`；Highlighter 在 `onFindCommitted`/`onFindCleared` 时回调 HoverPreview |
+| 步骤                            | 实现                                                                                                                                                                                                                       |
+| ------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1. 定位内层 doc                 | `getPdfInnerDoc(app, reader)` —— 链式尝试 `pdfViewer.container.ownerDocument` / `viewer.ownerDocument` / `appConfig.mainContainer.ownerDocument` / `_pages[0].div.ownerDocument`，最后兜底 `reader._iframeWindow.document` |
+| 2. 所有 DOM 操作在内层 doc 执行 | popup `<div>` / `<canvas>` 创建、style 注入、`mouseover/mouseout` listener、`scroll/resize` listener 均使用 `innerDoc`                                                                                                     |
+| 3. 等比缩放渲染                 | 横向取整页宽（不做窄裁切），纵向以首匹配为中心（上 40% / 下 60%）截出一段段；缩放到 popup max（560×680），绝不非等比拉伸                                                                                                   |
+| 4. 防御式访问                   | 每次 hover 重新解析 app、pageView、canvas，不缓存；每个 PDF.js 访问点单独 try/catch                                                                                                                                        |
+| 5. 生命周期注册                 | `hooks.ts` 中 `onStartup` 调 `HoverPreview.activate()`，`onShutdown` 调 `deactivate()`；Highlighter 在 `onFindCommitted`/`onFindCleared` 时回调 HoverPreview                                                               |
 
 ### 集成点
 
@@ -207,14 +209,14 @@ npm run release  # 创建发布版本
 
 ### 常量配置
 
-| 常量 | 值 | 用途 |
-|---|---|---|
-| `HOVER_DELAY_MS` | 350 | 悬停多久后显示 popup |
-| `REENTRY_GRACE_MS` | 120 | 离开后多久真正隐藏（容纳快速移动） |
-| `POPUP_MAX_WIDTH_PX` | 560 | popup 最大宽 |
-| `POPUP_MAX_HEIGHT_PX` | 680 | popup 最大高 |
-| `POPUP_MIN_WIDTH_PX` | 280 | popup 最小宽（极端窄文本时) |
-| `VERTICAL_FOCUS_RATIO` | 0.4 | 纵向裁切时 match 上方占比 |
+| 常量                   | 值  | 用途                               |
+| ---------------------- | --- | ---------------------------------- |
+| `HOVER_DELAY_MS`       | 350 | 悬停多久后显示 popup               |
+| `REENTRY_GRACE_MS`     | 120 | 离开后多久真正隐藏（容纳快速移动） |
+| `POPUP_MAX_WIDTH_PX`   | 560 | popup 最大宽                       |
+| `POPUP_MAX_HEIGHT_PX`  | 680 | popup 最大高                       |
+| `POPUP_MIN_WIDTH_PX`   | 280 | popup 最小宽（极端窄文本时)        |
+| `VERTICAL_FOCUS_RATIO` | 0.4 | 纵向裁切时 match 上方占比          |
 
 ### 测试检查清单
 

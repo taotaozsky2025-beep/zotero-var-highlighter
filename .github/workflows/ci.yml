@@ -28,6 +28,31 @@ jobs:
         uses: zotero-plugin-dev/workflows/setup-js@main
       - name: Run Build
         run: npm run build
+      - name: Verify production XPI security
+        run: |
+          python3 - <<'PY'
+          import hashlib
+          import json
+          from pathlib import Path
+          import zipfile
+
+          forbidden = ("zotero://plugin", "zotero://ztoolkit-debug")
+          metadata = json.loads(Path("package.json").read_text(encoding="utf-8"))
+          script_path = "content/scripts/zotero-var-highlighter.js"
+          unpacked = Path(".scaffold/build/addon") / script_path
+          script = unpacked.read_text(encoding="utf-8")
+          assert not any(value in script for value in forbidden), "Debug protocol in production bundle"
+          packages = list(Path(".scaffold/build").rglob("*.xpi"))
+          assert len(packages) == 1, "Expected exactly one production XPI"
+          package = packages[0]
+          with zipfile.ZipFile(package) as archive:
+              manifest = json.loads(archive.read("manifest.json"))
+              assert manifest["version"] == metadata["version"], "Unexpected release version"
+              script = archive.read(script_path).decode("utf-8")
+              assert not any(value in script for value in forbidden), "Debug protocol in packaged XPI"
+          print("Verified production XPI:", package)
+          print("SHA256:", hashlib.sha256(package.read_bytes()).hexdigest())
+          PY
       - name: Upload build result
         uses: actions/upload-artifact@v4
         with:
@@ -36,9 +61,24 @@ jobs:
 
   test:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        channel: [release, beta]
     needs:
       - build
     steps:
       - name: Setup JS
         uses: zotero-plugin-dev/workflows/setup-js@main
+      - name: Install Zotero for the selected channel
+        run: |
+          curl --fail --location --retry 3 \
+            --output "$RUNNER_TEMP/zotero.tar.bz2" \
+            "https://www.zotero.org/download/client/dl?platform=linux-x86_64&channel=${{ matrix.channel }}"
+          mkdir -p "$RUNNER_TEMP/zvh-zotero"
+          tar -xf "$RUNNER_TEMP/zotero.tar.bz2" -C "$RUNNER_TEMP/zvh-zotero"
+          binary="$RUNNER_TEMP/zvh-zotero/Zotero_linux-x86_64/zotero"
+          test -x "$binary"
+          echo "ZOTERO_PLUGIN_ZOTERO_BIN_PATH=$binary" >> "$GITHUB_ENV"
       - run: npm run test

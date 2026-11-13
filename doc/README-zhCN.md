@@ -1,7 +1,7 @@
 # Zotero Var Highlighter
 
 [![zotero target version](https://img.shields.io/badge/Zotero-7--10-green?style=flat-square&logo=zotero&logoColor=CC2936)](https://www.zotero.org)
-[![version](https://img.shields.io/badge/版本-0.2.0-blue?style=flat-square)](https://github.com/taotaozsky2025-beep/zotero-var-highlighter/releases/latest)
+[![version](https://img.shields.io/badge/版本-0.2.2-blue?style=flat-square)](https://github.com/taotaozsky2025-beep/zotero-var-highlighter/releases/latest)
 [![Using Zotero Var Highlighter](https://img.shields.io/badge/Using-Zotero%20Plugin%20Template-blue?style=flat-square&logo=github)](https://github.com/windingwind/zotero-plugin-template)
 
 ---
@@ -23,41 +23,41 @@
 3. **高亮**所有匹配项（橙色/黄色）。
 4. 将**全文第一次出现**的位置标记为绿色——通常对应变量的定义处。
 
-### 悬停预览 *(v0.2.0 新增)*
+### 悬停预览 _(v0.2.0 新增)_
 
 将鼠标悬停在任意**非首匹配高亮**（橙色）上超过 350 ms，即可弹出**预览窗口**，显示首次出现所在页面的截图。无需跳转页面，即可一眼看到变量的定义位置。
 
 - 悬停在**首匹配**（绿色）上**不会**触发预览。
 - 鼠标移开后预览窗口自动消失。
 
-### 自定义设置 *(v0.2.0 新增)*
+### 自定义设置 _(v0.2.0 新增)_
 
 打开 **Zotero → 设置 → Zotero Var Highlighter** 进行个性化配置：
 
-| 设置项 | 说明 | 默认值 |
-|---|---|---|
-| 首匹配颜色 | 第一次出现的高亮颜色 | 绿色 `#00b450` |
-| 首匹配透明度 | 第一次出现的高亮透明度 | 55% |
-| 其他匹配颜色 | 其余出现位置的高亮颜色 | 橙色 `#ff9e00` |
-| 其他匹配透明度 | 其余出现位置的高亮透明度 | 45% |
-| 预览最大宽度 | 悬停预览窗口的最大宽度（像素） | 800 |
-| 预览最大高度 | 悬停预览窗口的最大高度（像素） | 500 |
-| 悬停延迟 | 悬停多久后显示预览（毫秒） | 350 |
+| 设置项         | 说明                           | 默认值         |
+| -------------- | ------------------------------ | -------------- |
+| 首匹配颜色     | 第一次出现的高亮颜色           | 绿色 `#00b450` |
+| 首匹配透明度   | 第一次出现的高亮透明度         | 55%            |
+| 其他匹配颜色   | 其余出现位置的高亮颜色         | 橙色 `#ff9e00` |
+| 其他匹配透明度 | 其余出现位置的高亮透明度       | 45%            |
+| 预览最大宽度   | 悬停预览窗口的最大宽度（像素） | 800            |
+| 预览最大高度   | 悬停预览窗口的最大高度（像素） | 500            |
+| 悬停延迟       | 悬停多久后显示预览（毫秒）     | 350            |
 
 ## 效果截图
 
 ![Zotero Var Highlighter 使用效果](../image.png)
 
-*绿色高亮为全文首次出现处（变量定义位置），橙色高亮为其余所有出现位置。*
+_绿色高亮为全文首次出现处（变量定义位置），橙色高亮为其余所有出现位置。_
 
 ## 兼容性
 
-| Zotero 版本 | 状态 |
-|---|---|
-| Zotero 7 | 支持 |
-| Zotero 8 | 支持 |
-| Zotero 9 | 支持 *(v0.2.0 新增)* |
-| Zotero 10 | 支持 |
+| Zotero 版本 | 状态                 |
+| ----------- | -------------------- |
+| Zotero 7    | 支持                 |
+| Zotero 8    | 支持                 |
+| Zotero 9    | 支持 _(v0.2.0 新增)_ |
+| Zotero 10   | 支持                 |
 
 ## 使用方法
 
@@ -69,15 +69,24 @@
 ## 更新日志
 
 ### 未发布
+
 - **兼容性**：将插件兼容范围扩展至 Zotero `10.0.*`，新增 Zotero 10 支持。
 
+### v0.2.2
+
+- **安全修复**：升级 zotero-plugin-toolkit 至 6.0.0，移除插件未使用的自动安装及调试协议入口。
+- **启动状态**：功能模块成功激活后再标记初始化完成。
+- **验证**：新增 Zotero 集成测试，覆盖协议注册、跨页高亮及悬浮预览。
+
 ### v0.2.0
+
 - **新增**：悬停预览功能——悬停橙色高亮即可弹窗显示首次出现处。
 - **新增**：可在设置面板中自定义高亮颜色、透明度和预览窗口尺寸。
 - **新增**：支持 Zotero 9。
 - **优化**：冷启动优化——插件在首次选词前预热 PDF.js 阅读器，避免初次使用时出现滚动抖动。
 
 ### v0.1.0
+
 - 首次发布。
 - 自动高亮 PDF 全文所有匹配项。
 - 首匹配绿色标记，快速定位变量定义。

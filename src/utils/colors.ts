@@ -3,7 +3,11 @@ import { getPref } from "./prefs";
 export function hexToRgba(hex: string, opacityPct: number): string {
   let h = String(hex || "").trim();
   if (h.startsWith("#")) h = h.slice(1);
-  if (h.length === 3) h = h.split("").map((c) => c + c).join("");
+  if (h.length === 3)
+    h = h
+      .split("")
+      .map((c) => c + c)
+      .join("");
   if (!/^[0-9a-fA-F]{6}$/.test(h)) h = "00b450";
   const r = parseInt(h.slice(0, 2), 16);
   const g = parseInt(h.slice(2, 4), 16);
@@ -17,7 +21,11 @@ export function hexToRgba(hex: string, opacityPct: number): string {
 export function darkenHex(hex: string): string {
   let h = String(hex || "").trim();
   if (h.startsWith("#")) h = h.slice(1);
-  if (h.length === 3) h = h.split("").map((c) => c + c).join("");
+  if (h.length === 3)
+    h = h
+      .split("")
+      .map((c) => c + c)
+      .join("");
   if (!/^[0-9a-fA-F]{6}$/.test(h)) h = "00b450";
   const r = Math.max(0, Math.round(parseInt(h.slice(0, 2), 16) * 0.65));
   const g = Math.max(0, Math.round(parseInt(h.slice(2, 4), 16) * 0.65));

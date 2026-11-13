@@ -8,7 +8,6 @@ const DEFAULT_FIRST_MATCH_OPACITY = 55;
 const DEFAULT_OTHER_MATCH_COLOR = "#ff9e00";
 const DEFAULT_OTHER_MATCH_OPACITY = 45;
 
-
 type RenderTextSelectionPopupEvent = {
   reader?: Reader;
   doc?: Document;
@@ -741,7 +740,6 @@ export class Highlighter {
         } catch {
           /* ignore */
         }
-
       };
 
       setTimeout(unlock, durationMs);
@@ -975,8 +973,7 @@ export class Highlighter {
   }
 
   // 数据属性，用于标记 .textLayer .highlight 的 "非首匹配" 颜色覆盖样式表
-  private static readonly OTHER_MATCH_STYLE_ATTR =
-    "data-zvh-other-match-style";
+  private static readonly OTHER_MATCH_STYLE_ATTR = "data-zvh-other-match-style";
 
   // 收集所有曾经注入过样式的内层 doc，pref 改变时遍历重注入。
   // 用 WeakRef 数组 + 周期性清理，避免持有 doc 强引用导致泄漏。
@@ -1199,18 +1196,14 @@ export class Highlighter {
     try {
       const pageView = app?.pdfViewer?._pages?.[pageIdx] ?? null;
       const textLayerDiv: HTMLElement | null =
-        pageView?.textLayer?.div ??
-        pageView?.textLayer?.textLayerDiv ??
-        null;
+        pageView?.textLayer?.div ?? pageView?.textLayer?.textLayerDiv ?? null;
       if (!textLayerDiv) {
         const doc: Document | null = this.getPdfDoc(app, reader);
         if (!doc) return false;
         const fallback = doc.querySelector(`.${this.FIRST_MARK_CLASS}`);
         return fallback !== null;
       }
-      return (
-        textLayerDiv.querySelector(`.${this.FIRST_MARK_CLASS}`) !== null
-      );
+      return textLayerDiv.querySelector(`.${this.FIRST_MARK_CLASS}`) !== null;
     } catch {
       return false;
     }
@@ -1483,9 +1476,7 @@ export class Highlighter {
       const pageMatches = fc?.pageMatches ?? fc?._pageMatches ?? null;
       const pageContents = fc?._pageContents ?? null;
       const currentPage =
-        Number(app?.pdfViewer?.currentPageNumber) ||
-        Number(app?.page) ||
-        -1;
+        Number(app?.pdfViewer?.currentPageNumber) || Number(app?.page) || -1;
       const pageCount =
         Number(app?.pagesCount) ||
         Number(app?.pdfDocument?.numPages) ||
@@ -1505,8 +1496,7 @@ export class Highlighter {
         const m = Array.isArray(pageMatches) ? pageMatches[i] : undefined;
         const c = Array.isArray(pageContents) ? pageContents[i] : undefined;
         const mDesc = Array.isArray(m) ? `m=${m.length}` : "m=?";
-        const cDesc =
-          typeof c === "string" ? `c=${c.length}` : `c=${typeof c}`;
+        const cDesc = typeof c === "string" ? `c=${c.length}` : `c=${typeof c}`;
         lines.push(`p${i + 1}: ${mDesc} ${cDesc}`);
       }
 
@@ -1521,9 +1511,7 @@ export class Highlighter {
           : this.lastMarkerAppliedPageIdx;
         const pageView = app?.pdfViewer?._pages?.[targetIdx] ?? null;
         const tlDirect: HTMLElement | null =
-          pageView?.textLayer?.div ??
-          pageView?.textLayer?.textLayerDiv ??
-          null;
+          pageView?.textLayer?.div ?? pageView?.textLayer?.textLayerDiv ?? null;
 
         const docCount = doc
           ? doc.querySelectorAll(`.${this.FIRST_MARK_CLASS}`).length
@@ -1536,11 +1524,10 @@ export class Highlighter {
           const first = doc!.querySelector(
             `.${this.FIRST_MARK_CLASS}`,
           ) as Element;
-          const pageEl = first.closest("[data-page-number]") as
-            | HTMLElement
-            | null;
-          const pageNum =
-            pageEl?.getAttribute("data-page-number") ?? "?";
+          const pageEl = first.closest(
+            "[data-page-number]",
+          ) as HTMLElement | null;
+          const pageNum = pageEl?.getAttribute("data-page-number") ?? "?";
           markerElDesc = `doc=${docCount} direct=${directCount} domPage=${pageNum} text="${(first.textContent || "").slice(0, 20)}"`;
         } else {
           markerElDesc = `doc=${docCount} direct=${directCount}`;
@@ -1561,7 +1548,9 @@ export class Highlighter {
           const doc: Document | null = this.getPdfDoc(app, reader);
           const pageView = app?.pdfViewer?._pages?.[targetIdx] ?? null;
           const tlDirect: HTMLElement | null =
-            pageView?.textLayer?.div ?? pageView?.textLayer?.textLayerDiv ?? null;
+            pageView?.textLayer?.div ??
+            pageView?.textLayer?.textLayerDiv ??
+            null;
           const hlCount = tlDirect
             ? tlDirect.querySelectorAll(".highlight").length
             : -1;
@@ -1630,7 +1619,9 @@ export class Highlighter {
         pw.show();
         pw.startCloseTimer(15000); // 留 15 秒看清楚 / 截图
       } catch (e) {
-        this.log(`showFirstMatchDiagnostic ProgressWindow failed: ${String(e)}`);
+        this.log(
+          `showFirstMatchDiagnostic ProgressWindow failed: ${String(e)}`,
+        );
       }
     } catch (e) {
       this.log(`showFirstMatchDiagnostic failed: ${String(e)}`);

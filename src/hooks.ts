@@ -15,11 +15,12 @@ async function onStartup() {
     `[${config.addonName}] onStartup: Zotero ready promises resolved`,
   );
   try {
-    // @ts-expect-error
+    // @ts-expect-error - Plugin instance is not typed
     Highlighter.activate(Zotero[config.addonInstance]);
     Zotero.debug(`[${config.addonName}] Highlighter activated`);
   } catch (e) {
     Zotero.debug(`[${config.addonName}] ERROR activating Highlighter: ${e}`);
+    throw e;
   }
   try {
     Highlighter.registerPrefObservers();
@@ -28,13 +29,15 @@ async function onStartup() {
     Zotero.debug(
       `[${config.addonName}] ERROR registering pref observers: ${e}`,
     );
+    throw e;
   }
   try {
-    // @ts-expect-error
+    // @ts-expect-error - Plugin instance is not typed
     HoverPreview.activate(Zotero[config.addonInstance]);
     Zotero.debug(`[${config.addonName}] HoverPreview activated`);
   } catch (e) {
     Zotero.debug(`[${config.addonName}] ERROR activating HoverPreview: ${e}`);
+    throw e;
   }
   const mainWindow = Zotero.getMainWindow();
   Zotero.debug(
@@ -51,13 +54,17 @@ async function onStartup() {
       `[${config.addonName}] onStartup: No main window found, waiting for event`,
     );
   }
+
+  // Mark ready only after the feature modules have activated successfully.
+  // @ts-expect-error - Plugin instance is not typed
+  Zotero[config.addonInstance].data.initialized = true;
 }
 
 async function onMainWindowLoad(win: _ZoteroTypes.MainWindow): Promise<void> {
   Zotero.debug(`[${config.addonName}] onMainWindowLoad: Called`);
 
   try {
-    // @ts-expect-error
+    // @ts-expect-error - Plugin instance is not typed
     Zotero[config.addonInstance].addToWindow(win);
     Zotero.debug(
       `[${config.addonName}] onMainWindowLoad: addToWindow executed`,
