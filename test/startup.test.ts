@@ -22,10 +22,9 @@ function makeTestPDF() {
     "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 5 0 R >> >> /Contents 6 0 R >>",
     "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 5 0 R >> >> /Contents 7 0 R >>",
     "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>",
-    ...streams.map(
-      (stream) =>
-        `<< /Length ${stream.length} >>\nstream\n${stream}\nendstream`,
-    ),
+    ...streams.map((stream) => {
+      return `<< /Length ${stream.length} >>\nstream\n${stream}\nendstream`;
+    }),
   ];
   let pdf = "%PDF-1.4\n";
   const offsets = [0];
@@ -39,10 +38,9 @@ function makeTestPDF() {
     .slice(1)
     .map((offset) => `${String(offset).padStart(10, "0")} 00000 n \n`)
     .join("");
-  return (
-    pdf +
-    `trailer\n<< /Size ${objects.length + 1} /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF\n`
-  );
+  pdf += `trailer\n<< /Size ${objects.length + 1} /Root 1 0 R >>\n`;
+  pdf += `startxref\n${xref}\n%%EOF\n`;
+  return pdf;
 }
 
 describe("startup and toolkit security", function () {
@@ -55,15 +53,16 @@ describe("startup and toolkit security", function () {
   });
 
   it("does not register toolkit installation or debug protocols", function () {
-    const io = Components.classes[
-      "@mozilla.org/network/io-service;1"
-    ].getService(Components.interfaces.nsIIOService);
+    const classes = Components.classes;
+    const service = classes["@mozilla.org/network/io-service;1"];
+    const io = service.getService(Components.interfaces.nsIIOService);
     const protocol = io.getProtocolHandler("zotero") as any;
     const extensions = protocol.wrappedJSObject._extensions;
     const forbidden = Object.keys(extensions).filter(
       (key) => key === "zotero://plugin" || key === "zotero://ztoolkit-debug",
     );
     (globalThis as any).debug({
+      zoteroVersion: Zotero.version,
       toolkitVersion: Zotero[config.addonInstance].data.ztoolkit._version,
       protocolKeys: Object.keys(extensions),
       installHandlerType: typeof extensions["zotero://plugin"],

@@ -1,7 +1,7 @@
 # Zotero Var Highlighter
 
 [![zotero target version](https://img.shields.io/badge/Zotero-7--10-green?style=flat-square&logo=zotero&logoColor=CC2936)](https://www.zotero.org)
-[![version](https://img.shields.io/badge/版本-0.2.0-blue?style=flat-square)](https://github.com/taotaozsky2025-beep/zotero-var-highlighter/releases/latest)
+[![version](https://img.shields.io/badge/版本-0.2.2-blue?style=flat-square)](https://github.com/taotaozsky2025-beep/zotero-var-highlighter/releases/latest)
 [![Using Zotero Var Highlighter](https://img.shields.io/badge/Using-Zotero%20Plugin%20Template-blue?style=flat-square&logo=github)](https://github.com/windingwind/zotero-plugin-template)
 
 ---
@@ -70,6 +70,12 @@
 
 ### 未发布
 - **兼容性**：将插件兼容范围扩展至 Zotero `10.0.*`，新增 Zotero 10 支持。
+
+### v0.2.2
+
+- **安全修复**：升级 zotero-plugin-toolkit 至 6.0.0，移除插件未使用的自动安装及调试协议入口。
+- **启动状态**：功能模块成功激活后再标记初始化完成。
+- **验证**：新增 Zotero 集成测试，覆盖协议注册、跨页高亮及悬浮预览。
 
 ### v0.2.0
 - **新增**：悬停预览功能——悬停橙色高亮即可弹窗显示首次出现处。
